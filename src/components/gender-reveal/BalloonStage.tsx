@@ -7,6 +7,14 @@ import { ConfettiBurst } from './ConfettiBurst';
 
 const BURST_ANIMATION_MS = 600;
 const SHAKE_ANIMATION_MS = 400;
+const TOUCH_VIBRATION_MS = 15;
+const BURST_VIBRATION_PATTERN = [30, 40, 30, 40, 60];
+
+function vibrate(pattern: number | number[]) {
+  if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+    navigator.vibrate(pattern);
+  }
+}
 
 export function BalloonStage() {
   const babyNickname = useGenderRevealStore((state) => state.input?.babyNickname ?? '');
@@ -24,6 +32,7 @@ export function BalloonStage() {
     if (!isBursting) {
       return undefined;
     }
+    vibrate(BURST_VIBRATION_PATTERN);
     const timer = setTimeout(() => {
       completeBurstTransition();
     }, BURST_ANIMATION_MS);
@@ -44,6 +53,7 @@ export function BalloonStage() {
       return;
     }
     touchBalloon();
+    vibrate(TOUCH_VIBRATION_MS);
 
     setIsShaking(true);
     if (shakeTimeoutRef.current) {
