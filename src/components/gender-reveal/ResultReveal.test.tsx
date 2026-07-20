@@ -29,9 +29,9 @@ describe('ResultReveal', () => {
       'src',
       expect.stringContaining('002.png'),
     );
-    expect(
-      screen.getByText("지민님! '콩이'이는 '아들'이에요! 2026년 12월 25일에 건강하게 만나요!"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('result-message')).toHaveTextContent(
+      "지민님! '콩이'이는 '아들'이에요!2026년 12월 25일에 건강하게 만나요!",
+    );
   });
 
   it("성별이 '딸'이면 여아 이미지와 문구를 노출한다", () => {
@@ -42,9 +42,9 @@ describe('ResultReveal', () => {
       'src',
       expect.stringContaining('003.png'),
     );
-    expect(
-      screen.getByText("지민님! '콩이'이는 '딸'이에요! 2026년 12월 25일에 건강하게 만나요!"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('result-message')).toHaveTextContent(
+      "지민님! '콩이'이는 '딸'이에요!2026년 12월 25일에 건강하게 만나요!",
+    );
   });
 
   it("'다시 시작하기' 클릭 시 입력값은 유지된 채 interaction 단계로 되돌아간다", async () => {

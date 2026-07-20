@@ -30,14 +30,14 @@ export default function GenderRevealPage() {
 
   if (!isMounted) {
     return (
-      <main className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-b from-pink-50 to-teal-50 p-6">
+      <main className="flex min-h-[100dvh] items-center justify-center bg-white p-6">
         <StepSkeleton />
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-b from-pink-50 to-teal-50 p-6">
+    <main className="flex min-h-[100dvh] items-center justify-center bg-white p-6">
       {step === 'input' && <StepOneForm />}
       {step === 'interaction' && <BalloonStage />}
       {step === 'result' && <ResultReveal />}

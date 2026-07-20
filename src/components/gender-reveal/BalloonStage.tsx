@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { ConfettiBurst } from './ConfettiBurst';
+import { HeartParticles } from './HeartParticles';
 
 const BURST_ANIMATION_MS = 600;
 const SHAKE_ANIMATION_MS = 400;
@@ -67,9 +68,10 @@ export function BalloonStage() {
 
   return (
     <section className="flex w-[min(420px,100%)] flex-col items-center gap-6 text-center">
-      <p className="m-0 text-xl font-bold text-slate-700">{`'${babyNickname}'은 아들일까요? 딸일까요?`}</p>
+      <p className="m-0 font-pixel text-xl leading-relaxed text-slate-900">{`'${babyNickname}'은 아들일까요? 딸일까요?`}</p>
 
       <div className="relative">
+        <HeartParticles />
         <button
           type="button"
           className={`cursor-pointer border-0 bg-transparent p-0 [transform:scale(var(--balloon-scale,1))] transition-transform duration-150 ease-out active:[transform:scale(calc(var(--balloon-scale,1)*0.96))_rotate(-2deg)] disabled:cursor-default ${motionClassName}`}
@@ -91,7 +93,7 @@ export function BalloonStage() {
         {isBursting && <ConfettiBurst />}
       </div>
 
-      <p className="m-0 text-sm text-gray-500">{touchCount} / 10</p>
+      <p className="m-0 font-pixel text-base tracking-widest text-slate-500">{touchCount} / 10</p>
     </section>
   );
 }

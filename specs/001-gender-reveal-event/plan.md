@@ -10,7 +10,11 @@
 터치하는 인터랙션(Step 2)을 거쳐, 입력한 성별에 따라 분기되는 축하 문구·이미지가 담긴 결과 화면
 (Step 3)을 보여주는 프론트엔드 단독 이벤트 페이지다. 서버 저장이나 링크 공유는 없으며, 모든 상태는
 Zustand 스토어로 클라이언트에서만 관리된다. Step 3에는 '다시 시작하기' 버튼을 두어 입력값은 유지한 채
-Step 2(터치 카운트 0)부터 재시작할 수 있다(Clarifications 세션 2026-07-18 반영).
+Step 2(터치 카운트 0)부터 재시작할 수 있다(Clarifications 세션 2026-07-18 반영). 전체 화면은
+레퍼런스(`public/reference/step1~4.png`) 기준의 화이트 배경·픽셀 아트 톤앤매너로 통일하며, 브랜드
+타이틀/헤드라인에는 픽셀 폰트(RoundedFixedsys), 본문/라벨에는 Pretendard(100~800)를 적용하고,
+성별에 따라 파스텔 블루/핑크 포인트 컬러와 하트 파티클·캐릭터 일러스트를 노출한다(FR-016~FR-020,
+자세한 구현은 아래 Design & Typography Implementation 참고).
 
 ## Technical Context
 
@@ -18,7 +22,9 @@ Step 2(터치 카운트 0)부터 재시작할 수 있다(Clarifications 세션 2
 
 **Primary Dependencies**: React (Next.js 내장), Zustand(클라이언트 상태), date-fns(KST 날짜 포맷),
 axios + TanStack Query(프로젝트 표준 스택이나 본 기능은 서버 데이터가 없어 사용 안 함), SCSS/Sass
-(CSS Modules), ESLint(`eslint-config-next`), Jest, Storybook
+(CSS Modules), ESLint(`eslint-config-next`), Jest, Storybook, 웹폰트
+RoundedFixedsys(DungGeunMo)·Pretendard(100~900 weight) — jsDelivr CDN `@font-face`로 로드
+(FR-016, 자세한 내용은 Design & Typography Implementation 참고)
 
 **Storage**: N/A — 서버/DB 저장 없음. 입력값과 터치 카운트는 Zustand 클라이언트 상태로만 유지되며
 새로고침 시 초기화된다(spec.md Assumptions).
@@ -52,6 +58,130 @@ axios + TanStack Query(프로젝트 표준 스택이나 본 기능은 서버 데
 | VI. Quality Gates | PASS | 각 컴포넌트에 Jest 테스트, 공유 컴포넌트에 Storybook 스토리, ESLint(`eslint-config-next`) 통과 요구. |
 
 Constitution Check 위반 없음 → Complexity Tracking 불필요.
+
+## Design & Typography Implementation
+
+레퍼런스: `public/reference/step1.png` ~ `step4.png` (spec.md FR-016~FR-020 대응)
+
+> 참고: 현재 저장소는 Constitution Principle III(SCSS Modules)와 달리 실제로는 Tailwind CSS +
+> `src/app/globals.css` 기반으로 이미 구현되어 있다(`StepOneForm.tsx`, `BalloonStage.tsx`,
+> `ResultReveal.tsx` 확인 결과). 이 드리프트를 이번 기능 범위에서 되돌리지는 않으며, 아래 폰트/컬러
+> 토큰도 기존 구현과 일관되게 Tailwind + 전역 CSS 방식으로 추가한다.
+
+### Fonts
+
+아래 `@font-face` 선언을 `src/app/globals.css` 최상단에 추가한다(기존
+`@import 'pretendard/dist/web/static/pretendard.css';` 줄을 대체):
+
+```css
+@font-face {
+    font-family: 'RoundedFixedsys';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_six@1.2/DungGeunMo.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+    font-weight: 100;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+    font-weight: 200;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+    font-weight: 300;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+    font-weight: 600;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+    font-weight: 800;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+    font-weight: 900;
+    font-display: swap;
+}
+```
+
+- `tailwind.config.ts`의 `theme.extend.fontFamily`에 `pixel: ['RoundedFixedsys', 'monospace']`를
+  추가한다(기존 `sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']`는 유지).
+  브랜드 타이틀("Gender-Reveal", "Come on baby")과 각 화면 헤드라인에는 `font-pixel`을, 라벨·
+  입력값·본문에는 기존 `font-sans`(Pretendard)를 적용한다(FR-016).
+- `package.json`의 `pretendard` npm 의존성은 위 CDN `@font-face`로 대체되어 더 이상 필요하지
+  않으나, 의존성 제거는 이번 기능 범위 밖(별도 정리 태스크로 분리).
+
+### Color tokens
+
+레퍼런스 이미지(`step1.png`, `step2.png`, `step3.png`, `step4.png`)를 픽셀 샘플링해 얻은 근사
+색상이다. `tailwind.config.ts`의 `theme.extend.colors`에 추가한다:
+
+| 토큰 | 값 | 용도 | 대응 FR |
+|------|-----|------|---------|
+| `boy-bg` | `#cae7ff` | Step 1 '아들' 토글 배경(FR-018) | FR-018 |
+| `boy-point` | `#509fdf` | Step 3 강조 문구·예정일 포인트 컬러(아들) | FR-019 |
+| `girl-bg` | `#ffd2d2` | Step 1 '딸' 토글 배경 | FR-018 |
+| `girl-point` | `#ff9999` | Step 3 강조 문구·예정일 포인트 컬러(딸) | FR-019 |
+| `heart-pink` | `#fba3af` | Step 2 하트 파티클 | FR-020 |
+| `heart-blue` | `#9cc5e5` | Step 2 하트 파티클 | FR-020 |
+
+기존 `StepOneForm.tsx`의 teal/pink 토글 색상(`peer-checked:bg-teal-500` 등)과
+`ResultReveal.tsx`·`StepOneForm.tsx`의 teal 그라데이션 버튼은 배경/보더 색상만 위 토큰으로
+교체 대상이며(그라데이션 버튼 자체는 유지), 실제 클래스 치환은 `/speckit-tasks` 단계에서
+태스크로 분리한다.
+
+### Assets
+
+- Step 2 하트 파티클(FR-020): 픽셀 아트 하트 스프라이트 2종
+  `public/img/heart-pink.png`, `public/img/heart-blue.png` 신규 추가 필요. 신규 컴포넌트
+  `HeartParticles.tsx`(`ConfettiBurst.tsx`와 동일한 패턴, `components/gender-reveal/` 아래)를
+  만들어 `BalloonStage.tsx`에서 풍선 주변 6곳에 `heart-pink`/`heart-blue` 교차 배치로 절대
+  위치시킨다.
+- Step 2 진행 카운터(FR-020): `BalloonStage.tsx`에 이미 `{touchCount} / 10` 텍스트가 존재하므로
+  텍스트 자체는 재구현 불필요 — `font-pixel` 클래스 적용만 추가한다.
+- Step 3 캐릭터 일러스트(FR-019): 기존 `img/002.png`(남아), `img/003.png`(여아)를 레퍼런스
+  (`step3.png`, `step4.png`)의 픽셀 아트 캐릭터 일러스트로 교체한다.
 
 ## Project Structure
 

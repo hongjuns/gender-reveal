@@ -5,6 +5,15 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        pixel: ['RoundedFixedsys', 'monospace'],
+      },
+      colors: {
+        'boy-bg': '#cae7ff',
+        'boy-point': '#509fdf',
+        'girl-bg': '#ffd2d2',
+        'girl-point': '#ff9999',
+        'heart-pink': '#fba3af',
+        'heart-blue': '#9cc5e5',
       },
       keyframes: {
         shake: {

@@ -120,7 +120,64 @@ plan.md의 Project Structure를 따른다: `src/app/gender-reveal/`, `src/compon
 
 ---
 
-## Phase 6: Polish & Cross-Cutting Concerns
+## Phase 6: Design & Typography Enhancements (FR-016~FR-020)
+
+**Purpose**: 레퍼런스(`public/reference/step1~4.png`)에 맞춰 픽셀/레트로 타이포그래피, 화이트+픽셀
+아트 톤앤매너, 성별별 파스텔 배경·포인트 컬러, 하트 파티클·캐릭터 일러스트를 기존 US1~US3 화면에
+반영한다. plan.md의 "Design & Typography Implementation" 섹션이 구현 기준이다.
+
+**Independent Test**: 세 화면을 각각 레퍼런스 스크린샷과 나란히 비교했을 때 브랜드 타이틀/헤드라인
+폰트, 화이트 배경, 토글 배경색, 결과 화면 포인트 컬러·캐릭터 일러스트, 풍선 주변 하트 파티클·진행
+카운터 폰트가 일치하는지 확인(quickstart.md #10).
+
+### Shared Design Tokens & Assets
+
+- [X] T032 [P] `src/app/globals.css` 최상단의 `@import 'pretendard/dist/web/static/pretendard.css';`를
+  제거하고, plan.md에 명시된 `RoundedFixedsys`(DungGeunMo) + `Pretendard`(100~900, 9단계) jsDelivr
+  CDN `@font-face` 선언 10개를 그대로 추가(FR-016). 다크모드 배경 오버라이드도 제거해 FR-017(화이트
+  배경 통일)을 충족시킴
+- [X] T033 [P] `tailwind.config.js`의 `theme.extend`에 `fontFamily.pixel: ['RoundedFixedsys', 'monospace']`와
+  `colors`(`boy-bg: '#cae7ff'`, `boy-point: '#509fdf'`, `girl-bg: '#ffd2d2'`, `girl-point: '#ff9999'`,
+  `heart-pink: '#fba3af'`, `heart-blue: '#9cc5e5'`) 추가(plan.md Color tokens, FR-016/FR-018/FR-019/FR-020)
+- [~] T034 [P] ~~`public/img/heart-pink.png`, `public/img/heart-blue.png` 픽셀 아트 하트 스프라이트
+  자산 추가~~ → 래스터 이미지 자산을 생성할 수 없어 인라인 SVG 하트(`HeartParticles.tsx`, `fill-heart-pink`/
+  `fill-heart-blue` 토큰 사용)로 대체 구현. 시각적으로 FR-020을 충족하나, 실제 픽셀 아트 PNG 스프라이트로
+  교체를 원하면 디자인 자산 전달 후 별도 작업 필요
+- [~] T035 [P] ~~`public/img/002.png`(남아), `public/img/003.png`(여아)를 픽셀 아트 캐릭터 일러스트로
+  교체~~ → 실제 확인 결과 기존 자산이 이미 레퍼런스(`step3.png`, `step4.png`)와 동일한 픽셀 아트
+  캐릭터였음(교체 불필요, Playwright로 시각 검증 완료)
+
+### Implementation for User Story 1 (Design)
+
+- [X] T036 [US1] `src/components/gender-reveal/StepOneForm.tsx` 수정: 브랜드 타이틀("Gender-Reveal",
+  "Come on baby")과 헤드라인에 `font-pixel` 클래스 적용(FR-016), 성별 토글 배경을 '아들'=`bg-boy-bg`,
+  '딸'=`bg-girl-bg`로 교체(FR-018)
+
+### Implementation for User Story 2 (Design)
+
+- [X] T037 [P] [US2] `src/components/gender-reveal/HeartParticles.tsx` 신규 컴포넌트 작성: SVG 하트를
+  풍선 주변 6곳에 핑크/블루 교차 배치(`absolute` 포지셔닝)(FR-020, T034 참고 — PNG 대신 SVG로 구현)
+- [X] T038 [P] [US2] `src/components/gender-reveal/HeartParticles.test.tsx`에 Jest 테스트 작성:
+  하트 6개가 렌더링되고 핑크/블루가 교차 배치되는지 검증(Constitution Principle VI)
+- [X] T039 [P] [US2] `src/components/gender-reveal/HeartParticles.stories.tsx` 작성: 하트 파티클
+  배치 상태를 Storybook 스토리로 문서화(Constitution Principle VI)
+- [X] T040 [US2] `src/components/gender-reveal/BalloonStage.tsx` 수정: 헤드라인과 진행 카운터
+  (`{touchCount} / 10`)에 `font-pixel` 클래스 적용(FR-016), `HeartParticles`를 풍선 주변에 렌더링(FR-020)
+
+### Implementation for User Story 3 (Design)
+
+- [X] T041 [US3] `src/components/gender-reveal/ResultReveal.tsx` 수정: 헤드라인에 `font-pixel` 클래스
+  적용(FR-016), 강조 문구("...아들이에요!"/"...딸이에요!")와 예정일 텍스트 색상을 성별에 따라
+  `text-boy-point`/`text-girl-point`로 분기(FR-019). 색상 타겟팅을 위해 메시지를 `<span>`으로 분리하며
+  `ResultReveal.test.tsx`의 관련 단언을 `getByText` 전체 문자열 매칭에서 `data-testid="result-message"` +
+  `toHaveTextContent`로 조정(기능 로직·검증 내용은 동일, 마크업만 분리)
+
+**Checkpoint**: 세 화면 모두 레퍼런스와 시각적으로 일치 — 폰트/배경/토글색상/포인트컬러/하트파티클/카운터가
+FR-016~FR-020을 충족
+
+---
+
+## Phase 7: Polish & Cross-Cutting Concerns
 
 **Purpose**: 개별 스토리에 속하지 않는 전체 품질 점검
 
@@ -128,6 +185,9 @@ plan.md의 Project Structure를 따른다: `src/app/gender-reveal/`, `src/compon
 - [ ] T029 [P] 3가지 이상의 대표 화면 크기(모바일 320px, 태블릿, 데스크톱)에서 텍스트/이미지 잘림·겹침 여부 점검(FR-013, SC-004)
 - [ ] T030 [P] `npm run lint`로 ESLint(`eslint-config-next`) 전체 통과 확인, 비활성화된 규칙에 대한 정당화 주석 여부 점검(Constitution Principle VI)
 - [ ] T031 `npm test`로 전체 Jest 테스트 스위트 통과 확인 및 `npm run storybook`으로 모든 컴포넌트 스토리 정상 렌더링 확인
+- [X] T042 [P] `quickstart.md` #10 디자인/타이포그래피 검증 시나리오(레퍼런스 이미지 육안 비교) 실행(FR-016~FR-020) —
+  Playwright로 Step1(아들/딸 폼)·Step2(풍선+하트+카운터)·Step3/4(남아/여아 결과) 스크린샷을 확보해 레퍼런스와
+  비교 완료
 
 ---
 
@@ -140,7 +200,10 @@ plan.md의 Project Structure를 따른다: `src/app/gender-reveal/`, `src/compon
 - **User Story 1 (Phase 3)**: Foundational 완료 후 시작 가능
 - **User Story 2 (Phase 4)**: Foundational 완료 후 시작 가능. 실제 화면 흐름상 US1 다음 단계이지만, 스토어 상태를 직접 세팅하면 US1 완료 전에도 독립적으로 구현/테스트 가능
 - **User Story 3 (Phase 5)**: Foundational 완료 후 시작 가능. 마찬가지로 스토어 상태 직접 세팅으로 US1/US2 완료 전에도 독립 구현/테스트 가능
-- **Polish (Phase 6)**: 세 사용자 스토리 모두 완료 후 진행
+- **Design & Typography Enhancements (Phase 6)**: US1~US3(Phase 3~5)의 컴포넌트가 이미 존재해야
+  스타일/클래스를 얹을 수 있으므로 Phase 3~5 완료 후 진행. 공유 토큰(T032~T035)은 서로 다른 파일이라
+  병렬 가능하며, 스토리별 적용 작업(T036, T037~T040, T041)도 서로 다른 컴포넌트 파일이라 병렬 가능
+- **Polish (Phase 7)**: Design & Typography Enhancements(Phase 6)를 포함해 모든 스토리가 완료된 후 진행
 
 ### User Story Dependencies
 
@@ -160,6 +223,8 @@ plan.md의 Project Structure를 따른다: `src/app/gender-reveal/`, `src/compon
 - Foundational의 T009, T010, T011은 [P] — 병렬 실행 가능(단, T008 스토어 구현 완료 후 T009 실행)
 - Foundational 완료 후에는 US1(T013~T017), US2(T018~T022), US3(T023~T027)를 서로 다른 담당자가 병렬로 진행 가능(단, 각 스토리 내부에서 스토어 상태를 직접 세팅해 테스트)
 - 각 스토리 내 테스트(T013/T018/T023)와 스타일(T015/T020/T025), 스토리 파일(T016/T021/T026)은 서로 다른 파일이므로 [P]
+- Phase 6의 공유 토큰 작업(T032~T035)은 모두 [P] — 병렬 실행 가능
+- Phase 6의 T037(HeartParticles 구현)과 T038(테스트)·T039(스토리)는 서로 다른 파일이므로 [P](단, T040은 T037 완료 후 진행)
 
 ---
 
@@ -191,7 +256,8 @@ Story 1~3 전체**이며, "User Story 1만 배포"는 이벤트로서 의미 있
 2. US1 구현 → 정보 입력 화면만 데모 가능(결과는 아직 없음, 내부 검증용)
 3. US2 구현 → 입력 + 풍선 터치까지 데모 가능(결과 화면은 아직 없음, 내부 검증용)
 4. US3 구현 → 전체 흐름(입력 → 터치 → 결과 → 재시작) 완주 가능 → 실제 배포 가능한 첫 시점
-5. Polish(Phase 6)로 반응형/린트/테스트 전수 확인 후 배포
+5. Design & Typography Enhancements(Phase 6) → 레퍼런스 기준 폰트/컬러/파티클/일러스트 반영(FR-016~FR-020)
+6. Polish(Phase 7)로 반응형/린트/테스트 전수 확인 후 배포
 
 ---
 
