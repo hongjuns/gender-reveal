@@ -47,6 +47,32 @@ module.exports = {
           '0%, 100%': { opacity: '0.6' },
           '50%': { opacity: '1' },
         },
+        float: {
+          '0%, 100%': { transform: 'translateY(0) scale(var(--balloon-scale, 1))' },
+          '50%': { transform: 'translateY(-6px) scale(var(--balloon-scale, 1))' },
+        },
+        heartFloat: {
+          '0%, 100%': { transform: 'translateY(0) scale(1)' },
+          '50%': { transform: 'translateY(-5px) scale(1.08)' },
+        },
+        tabPop: {
+          '0%': {
+            transform: 'translate(calc(-50% + var(--tap-offset-x, 0px)), 0) scale(0.7)',
+            opacity: '0',
+          },
+          '15%': {
+            transform: 'translate(calc(-50% + var(--tap-offset-x, 0px)), -8px) scale(1.15)',
+            opacity: '1',
+          },
+          '35%': {
+            transform: 'translate(calc(-50% + var(--tap-offset-x, 0px)), -14px) scale(1)',
+            opacity: '1',
+          },
+          '100%': {
+            transform: 'translate(calc(-50% + var(--tap-offset-x, 0px)), -50px) scale(1)',
+            opacity: '0',
+          },
+        },
       },
       animation: {
         shake: 'shake 0.4s ease-in-out',
@@ -54,6 +80,9 @@ module.exports = {
         confettiBurst: 'confettiBurst 0.9s ease-out forwards',
         fadeIn: 'fadeIn 0.4s ease-out',
         pulseSoft: 'pulseSoft 1.4s ease-in-out infinite',
+        float: 'float 2.6s ease-in-out infinite',
+        heartFloat: 'heartFloat 1.8s ease-in-out infinite',
+        tabPop: 'tabPop 0.6s ease-out forwards',
       },
     },
   },

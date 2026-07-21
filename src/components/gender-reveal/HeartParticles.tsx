@@ -5,6 +5,7 @@ interface HeartSpot {
   src: string;
   positionClassName: string;
   sizeClassName: string;
+  delay: string;
 }
 
 const HEART_SPOTS: HeartSpot[] = [
@@ -13,36 +14,42 @@ const HEART_SPOTS: HeartSpot[] = [
     src: '/img/step2/heart-pink.png',
     positionClassName: 'left-[-30%] top-[9%]',
     sizeClassName: 'w-[23%]',
+    delay: '0s',
   },
   {
     id: 2,
     src: '/img/step2/heart-blue.png',
     positionClassName: 'left-[-52%] top-[39%]',
     sizeClassName: 'w-[23%]',
+    delay: '0.3s',
   },
   {
     id: 3,
     src: '/img/step2/heart-pink.png',
     positionClassName: 'left-[-34%] top-[75%]',
     sizeClassName: 'w-[23%]',
+    delay: '0.6s',
   },
   {
     id: 4,
     src: '/img/step2/heart-blue.png',
     positionClassName: 'left-[114%] top-[27%]',
     sizeClassName: 'w-[23%]',
+    delay: '0.15s',
   },
   {
     id: 5,
     src: '/img/step2/heart-pink.png',
     positionClassName: 'left-[126%] top-[67%]',
     sizeClassName: 'w-[23%]',
+    delay: '0.45s',
   },
   {
     id: 6,
     src: '/img/step2/heart-pink.png',
     positionClassName: 'left-[93%] top-[100%]',
     sizeClassName: 'w-[15%]',
+    delay: '0.75s',
   },
 ];
 
@@ -56,7 +63,8 @@ export function HeartParticles() {
           alt=""
           width={141}
           height={126}
-          className={`absolute h-auto ${heart.sizeClassName} ${heart.positionClassName}`}
+          className={`absolute h-auto animate-heartFloat ${heart.sizeClassName} ${heart.positionClassName}`}
+          style={{ animationDelay: heart.delay }}
         />
       ))}
     </div>

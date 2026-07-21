@@ -5,11 +5,18 @@ import Image from 'next/image';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { ConfettiBurst } from './ConfettiBurst';
 import { HeartParticles } from './HeartParticles';
+import { PixelHeartBurst } from './PixelHeartBurst';
 
 const BURST_ANIMATION_MS = 600;
 const SHAKE_ANIMATION_MS = 400;
+const TAP_POPUP_MS = 600;
 const TOUCH_VIBRATION_MS = 15;
 const BURST_VIBRATION_PATTERN = [30, 40, 30, 40, 60];
+
+interface TapPopup {
+  id: number;
+  offsetX: number;
+}
 
 function vibrate(pattern: number | number[]) {
   if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
@@ -27,6 +34,7 @@ export function BalloonStage() {
   );
 
   const [isShaking, setIsShaking] = useState(false);
+  const [tapPopups, setTapPopups] = useState<TapPopup[]>([]);
   const shakeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -61,10 +69,16 @@ export function BalloonStage() {
       clearTimeout(shakeTimeoutRef.current);
     }
     shakeTimeoutRef.current = setTimeout(() => setIsShaking(false), SHAKE_ANIMATION_MS);
+
+    const popupId = Date.now() + Math.random();
+    setTapPopups((prev) => [...prev, { id: popupId, offsetX: Math.random() * 30 - 15 }]);
+    setTimeout(() => {
+      setTapPopups((prev) => prev.filter((popup) => popup.id !== popupId));
+    }, TAP_POPUP_MS);
   }
 
   const scale = 1 + Math.min(touchCount, 9) * 0.04;
-  const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : '';
+  const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : 'animate-float';
 
   return (
     <section className="flex w-[min(420px,100%)] flex-col items-center text-center">
@@ -90,7 +104,23 @@ export function BalloonStage() {
           />
         </button>
 
-        {isBursting && <ConfettiBurst />}
+        {tapPopups.map((popup) => (
+          <span
+            key={popup.id}
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 -top-6 animate-tabPop whitespace-nowrap font-pixel text-xl text-heart-pink"
+            style={{ '--tap-offset-x': `${popup.offsetX}px` } as React.CSSProperties}
+          >
+            Tab!
+          </span>
+        ))}
+
+        {isBursting && (
+          <>
+            <ConfettiBurst />
+            <PixelHeartBurst />
+          </>
+        )}
       </div>
 
       <p className="m-0 mt-16 font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
