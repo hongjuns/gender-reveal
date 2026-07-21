@@ -6,7 +6,7 @@ import type { BabyGender } from '@/types/genderReveal';
 import { parseDateInputValue } from '@/lib/date';
 
 const inputClassName =
-  'h-12 rounded border-0 bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
+  'h-12 w-full appearance-none rounded border-0 bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
 
 export function StepOneForm() {
   const setInput = useGenderRevealStore((state) => state.setInput);
