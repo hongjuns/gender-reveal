@@ -14,6 +14,7 @@ interface GenderRevealState {
   touchBalloon: () => void;
   completeBurstTransition: () => void;
   restart: () => void;
+  resetAll: () => void;
 }
 
 function isValidInput(input: GenderRevealInput): boolean {
@@ -64,5 +65,12 @@ export const useGenderRevealStore = create<GenderRevealState>((set, get) => ({
       return;
     }
     set({ step: 'interaction', touchCount: 0, isBursting: false });
+  },
+
+  resetAll: () => {
+    if (get().step !== 'result') {
+      return;
+    }
+    set({ step: 'input', input: null, touchCount: 0, isBursting: false });
   },
 }));

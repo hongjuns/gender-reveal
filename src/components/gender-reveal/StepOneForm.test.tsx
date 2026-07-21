@@ -19,7 +19,7 @@ describe('StepOneForm', () => {
     const user = userEvent.setup();
     render(<StepOneForm />);
 
-    await user.click(screen.getByRole('button', { name: '시작하기' }));
+    await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
 
     expect(await screen.findByText('정보를 모두 입력해주세요')).toBeInTheDocument();
     expect(useGenderRevealStore.getState().step).toBe('input');
@@ -35,7 +35,7 @@ describe('StepOneForm', () => {
     });
     await user.type(screen.getByLabelText('받는 사람'), '지민');
     await user.click(screen.getByLabelText('아들'));
-    await user.click(screen.getByRole('button', { name: '시작하기' }));
+    await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
 
     const state = useGenderRevealStore.getState();
     expect(state.step).toBe('interaction');

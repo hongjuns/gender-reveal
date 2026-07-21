@@ -6,7 +6,7 @@ import type { BabyGender } from '@/types/genderReveal';
 import { parseDateInputValue } from '@/lib/date';
 
 const inputClassName =
-  'rounded-[10px] border-0 bg-gray-100 px-3 py-3 text-base text-slate-800 placeholder:text-gray-400 focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
+  'h-12 rounded border-0 bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
 
 export function StepOneForm() {
   const setInput = useGenderRevealStore((state) => state.setInput);
@@ -52,17 +52,17 @@ export function StepOneForm() {
 
   return (
     <form
-      className="flex w-[min(420px,100%)] flex-col gap-6 bg-white p-6"
+      className="flex w-[min(420px,100%)] flex-col bg-white p-5"
       onSubmit={handleSubmit}
       noValidate
     >
-      <div className="flex flex-col items-center gap-1">
-        <p className="m-0 font-pixel text-sm tracking-wide text-slate-700">Gender-Reveal</p>
-        <h1 className="m-0 font-pixel text-3xl text-slate-900">Come on baby</h1>
+      <div className="flex flex-col items-center gap-0.5">
+        <p className="m-0 font-pixel text-[22px] tracking-wide text-ink">Gender-Reveal</p>
+        <h1 className="m-0 font-pixel text-4xl text-ink">Come on baby</h1>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-bold text-slate-800" htmlFor={nicknameId}>
+      <div className="mt-16 flex flex-col gap-3">
+        <label className="font-pixel text-base text-ink" htmlFor={nicknameId}>
           아기 태명
         </label>
         <input
@@ -71,12 +71,12 @@ export function StepOneForm() {
           className={inputClassName}
           value={babyNickname}
           onChange={(event) => setBabyNickname(event.target.value)}
-          placeholder="예: 콩이"
+          placeholder="예시: 깡총이"
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-bold text-slate-800" htmlFor={dueDateId}>
+      <div className="mt-[30px] flex flex-col gap-3">
+        <label className="font-pixel text-base text-ink" htmlFor={dueDateId}>
           출산 예정일
         </label>
         <input
@@ -88,8 +88,8 @@ export function StepOneForm() {
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-bold text-slate-800" htmlFor={recipientId}>
+      <div className="mt-[30px] flex flex-col gap-3">
+        <label className="font-pixel text-base text-ink" htmlFor={recipientId}>
           받는 사람
         </label>
         <input
@@ -98,13 +98,13 @@ export function StepOneForm() {
           className={inputClassName}
           value={recipientName}
           onChange={(event) => setRecipientName(event.target.value)}
-          placeholder="예: 지민"
+          placeholder="예시: 할머니, 할아버지"
         />
       </div>
 
-      <fieldset className="border-0 p-0">
-        <legend className="mb-2 text-sm font-bold text-slate-800">아기 성별</legend>
-        <div className="flex gap-3">
+      <fieldset className="mt-14 border-0 p-0">
+        <legend className="mb-3 font-pixel text-base text-ink">아기 성별</legend>
+        <div className="flex gap-2.5">
           <label className="relative flex-1 cursor-pointer">
             <input
               type="radio"
@@ -114,7 +114,7 @@ export function StepOneForm() {
               onChange={() => setBabyGender('son')}
               className="peer sr-only"
             />
-            <span className="flex items-center justify-center rounded-2xl bg-boy-bg py-3 text-base font-bold text-slate-700 transition-all peer-checked:ring-2 peer-checked:ring-slate-800 peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">
+            <span className="flex h-[50px] items-center justify-center rounded bg-boy-bg font-pixel text-base text-ink transition-all peer-checked:ring-2 peer-checked:ring-ink peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">
               아들
             </span>
           </label>
@@ -127,7 +127,7 @@ export function StepOneForm() {
               onChange={() => setBabyGender('daughter')}
               className="peer sr-only"
             />
-            <span className="flex items-center justify-center rounded-2xl bg-girl-bg py-3 text-base font-bold text-slate-700 transition-all peer-checked:ring-2 peer-checked:ring-slate-800 peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">
+            <span className="flex h-[50px] items-center justify-center rounded bg-girl-bg font-pixel text-base text-ink transition-all peer-checked:ring-2 peer-checked:ring-ink peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">
               딸
             </span>
           </label>
@@ -135,16 +135,16 @@ export function StepOneForm() {
       </fieldset>
 
       {error && (
-        <p className="m-0 text-sm text-red-600" role="alert">
+        <p className="mt-3 text-sm text-red-600" role="alert">
           {error}
         </p>
       )}
 
       <button
         type="submit"
-        className="flex cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-slate-900 p-4 text-base font-bold text-white transition hover:bg-slate-800"
+        className="mt-[35px] flex h-[60px] cursor-pointer items-center justify-center gap-2 rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
       >
-        시작하기
+        젠더리빌 풍선 만들기
         <span aria-hidden="true">›</span>
       </button>
     </form>

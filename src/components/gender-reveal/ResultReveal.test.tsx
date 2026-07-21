@@ -27,10 +27,13 @@ describe('ResultReveal', () => {
 
     expect(screen.getByAltText('남아 일러스트')).toHaveAttribute(
       'src',
-      expect.stringContaining('002.png'),
+      expect.stringContaining('baby-son.png'),
     );
     expect(screen.getByTestId('result-message')).toHaveTextContent(
-      "지민님! '콩이'이는 '아들'이에요!2026년 12월 25일에 건강하게 만나요!",
+      "'콩이'이는 귀엽고 사랑스러운 '아들'이에요!",
+    );
+    expect(screen.getByTestId('result-closing')).toHaveTextContent(
+      '지민님! 2026년 12월 25일에 건강하게 만나요 :)',
     );
   });
 
@@ -40,23 +43,38 @@ describe('ResultReveal', () => {
 
     expect(screen.getByAltText('여아 일러스트')).toHaveAttribute(
       'src',
-      expect.stringContaining('003.png'),
+      expect.stringContaining('baby-daughter.png'),
     );
     expect(screen.getByTestId('result-message')).toHaveTextContent(
-      "지민님! '콩이'이는 '딸'이에요!2026년 12월 25일에 건강하게 만나요!",
+      "'콩이'이는 귀엽고 사랑스러운 '딸'이에요!",
+    );
+    expect(screen.getByTestId('result-closing')).toHaveTextContent(
+      '지민님! 2026년 12월 25일에 건강하게 만나요 :)',
     );
   });
 
-  it("'다시 시작하기' 클릭 시 입력값은 유지된 채 interaction 단계로 되돌아간다", async () => {
+  it("'뒤로가기' 클릭 시 입력값은 유지된 채 interaction 단계로 되돌아간다", async () => {
     seedResultState('son');
     const user = userEvent.setup();
     render(<ResultReveal />);
 
-    await user.click(screen.getByRole('button', { name: '다시 시작하기' }));
+    await user.click(screen.getByRole('button', { name: /뒤로가기/ }));
 
     const state = useGenderRevealStore.getState();
     expect(state.step).toBe('interaction');
     expect(state.touchCount).toBe(0);
     expect(state.input?.babyNickname).toBe('콩이');
+  });
+
+  it("'젠더리빌 새로 만들기' 클릭 시 입력값까지 초기화되고 input 단계로 되돌아간다", async () => {
+    seedResultState('son');
+    const user = userEvent.setup();
+    render(<ResultReveal />);
+
+    await user.click(screen.getByRole('button', { name: '젠더리빌 새로 만들기' }));
+
+    const state = useGenderRevealStore.getState();
+    expect(state.step).toBe('input');
+    expect(state.input).toBeNull();
   });
 });

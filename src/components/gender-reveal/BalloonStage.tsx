@@ -67,10 +67,10 @@ export function BalloonStage() {
   const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : '';
 
   return (
-    <section className="flex w-[min(420px,100%)] flex-col items-center gap-6 text-center">
-      <p className="m-0 font-pixel text-xl leading-relaxed text-slate-900">{`'${babyNickname}'은 아들일까요? 딸일까요?`}</p>
+    <section className="flex w-[min(420px,100%)] flex-col items-center text-center">
+      <p className="m-0 whitespace-pre-line font-pixel text-[22px] leading-[29px] text-ink">{`'${babyNickname}'은\n아들일까요? 딸일까요?`}</p>
 
-      <div className="relative">
+      <div className="relative mt-14">
         <HeartParticles />
         <button
           type="button"
@@ -81,19 +81,20 @@ export function BalloonStage() {
           disabled={isBursting}
         >
           <Image
-            src="/img/001.png"
+            src="/img/step2/balloon.png"
             alt="검정 풍선"
-            width={240}
-            height={320}
+            width={575}
+            height={779}
             priority
-            className="h-auto w-[min(240px,60vw)]"
+            className="h-auto w-[min(200px,41vw)]"
           />
         </button>
 
         {isBursting && <ConfettiBurst />}
       </div>
 
-      <p className="m-0 font-pixel text-base tracking-widest text-slate-500">{touchCount} / 10</p>
+      <p className="m-0 mt-16 font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
+      <p className="m-0 mt-2 font-pixel text-lg text-ink-muted">{touchCount} / 10</p>
     </section>
   );
 }

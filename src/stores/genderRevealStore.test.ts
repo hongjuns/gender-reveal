@@ -153,3 +153,31 @@ describe('restart', () => {
     expect(useGenderRevealStore.getState().touchCount).toBe(1);
   });
 });
+
+describe('resetAll', () => {
+  it('입력값까지 모두 초기화하고 input 단계로 되돌린다', () => {
+    useGenderRevealStore.getState().setInput(validInput);
+    for (let i = 0; i < 10; i += 1) {
+      useGenderRevealStore.getState().touchBalloon();
+    }
+    useGenderRevealStore.getState().completeBurstTransition();
+
+    useGenderRevealStore.getState().resetAll();
+
+    const state = useGenderRevealStore.getState();
+    expect(state.step).toBe('input');
+    expect(state.touchCount).toBe(0);
+    expect(state.isBursting).toBe(false);
+    expect(state.input).toBeNull();
+  });
+
+  it('result 단계가 아니면 아무 것도 하지 않는다', () => {
+    useGenderRevealStore.getState().setInput(validInput);
+    useGenderRevealStore.getState().touchBalloon();
+
+    useGenderRevealStore.getState().resetAll();
+
+    expect(useGenderRevealStore.getState().step).toBe('interaction');
+    expect(useGenderRevealStore.getState().input).toEqual(validInput);
+  });
+});

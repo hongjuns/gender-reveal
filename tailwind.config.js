@@ -14,6 +14,9 @@ module.exports = {
         'girl-point': '#ff9999',
         'heart-pink': '#fba3af',
         'heart-blue': '#9cc5e5',
+        ink: '#232323',
+        'ink-muted': '#9f9f9f',
+        'input-bg': '#f2f2f2',
       },
       keyframes: {
         shake: {

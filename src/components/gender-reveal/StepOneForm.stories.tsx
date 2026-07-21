@@ -50,7 +50,7 @@ export const ValidationError: Story = {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
-    await user.click(canvas.getByRole('button', { name: '시작하기' }));
+    await user.click(canvas.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
 
     await expect(canvas.getByText('정보를 모두 입력해주세요')).toBeInTheDocument();
   },
