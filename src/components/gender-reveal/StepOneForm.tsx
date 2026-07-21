@@ -79,13 +79,20 @@ export function StepOneForm() {
         <label className="font-pixel text-base text-ink" htmlFor={dueDateId}>
           출산 예정일
         </label>
-        <input
-          id={dueDateId}
-          type="date"
-          className={inputClassName}
-          value={dueDateValue}
-          onChange={(event) => setDueDateValue(event.target.value)}
-        />
+        <div className="relative">
+          <input
+            id={dueDateId}
+            type="date"
+            className={`${inputClassName} ${dueDateValue ? '' : 'text-transparent'}`}
+            value={dueDateValue}
+            onChange={(event) => setDueDateValue(event.target.value)}
+          />
+          {!dueDateValue && (
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-ink-muted">
+              연.월.일
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="mt-[30px] flex flex-col gap-3">
