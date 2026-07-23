@@ -81,8 +81,8 @@ export function BalloonStage() {
   const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : 'animate-float';
 
   return (
-    <section className="flex w-[min(420px,100%)] flex-col items-center text-center">
-      <p className="m-0 whitespace-pre-line font-pixel text-[22px] leading-[29px] text-ink">{`'${babyNickname}'은\n아들일까요? 딸일까요?`}</p>
+    <section className="flex w-[min(420px,100%)] flex-col items-center bg-white p-5 text-center">
+      <p className="m-0 whitespace-pre-line font-pixel text-[22px] leading-[29px] text-ink">{`${babyNickname}는\n아들일까요? 딸일까요?`}</p>
 
       <div className="relative mt-14">
         <HeartParticles />
@@ -125,6 +125,14 @@ export function BalloonStage() {
 
       <p className="m-0 mt-16 font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
       <p className="m-0 mt-2 font-pixel text-lg text-ink-muted">{touchCount} / 10</p>
+
+      <button
+        type="button"
+        className="mt-6 h-[60px] w-full cursor-pointer rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
+        onClick={completeBurstTransition}
+      >
+        풍선 보내기
+      </button>
     </section>
   );
 }

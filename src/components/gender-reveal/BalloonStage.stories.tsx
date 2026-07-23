@@ -64,7 +64,7 @@ export const ClickInteraction: Story = {
     seedState(0, false);
     const canvas = within(canvasElement);
     const user = userEvent.setup();
-    const balloon = canvas.getByRole('button', { name: /풍선/ });
+    const balloon = canvas.getByRole('button', { name: /풍선 터치하기/ });
     await user.click(balloon);
     await user.click(balloon);
     await user.click(balloon);

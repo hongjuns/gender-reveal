@@ -36,14 +36,14 @@ describe('BalloonStage', () => {
     expect(
       screen.getByText("'콩이'은 아들일까요? 딸일까요?"),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /풍선/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /풍선 터치하기/ })).toBeInTheDocument();
   });
 
   it('터치할 때마다 touchCount가 증가한다', async () => {
     const user = userEvent.setup({ delay: null });
     render(<BalloonStage />);
 
-    const balloon = screen.getByRole('button', { name: /풍선/ });
+    const balloon = screen.getByRole('button', { name: /풍선 터치하기/ });
     await user.click(balloon);
 
     expect(useGenderRevealStore.getState().touchCount).toBe(1);
@@ -53,7 +53,7 @@ describe('BalloonStage', () => {
     const user = userEvent.setup({ delay: null });
     render(<BalloonStage />);
 
-    const balloon = screen.getByRole('button', { name: /풍선/ });
+    const balloon = screen.getByRole('button', { name: /풍선 터치하기/ });
     for (let i = 0; i < 10; i += 1) {
       await user.click(balloon);
     }
@@ -71,7 +71,7 @@ describe('BalloonStage', () => {
     const user = userEvent.setup({ delay: null });
     render(<BalloonStage />);
 
-    const balloon = screen.getByRole('button', { name: /풍선/ });
+    const balloon = screen.getByRole('button', { name: /풍선 터치하기/ });
     for (let i = 0; i < 25; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       await user.click(balloon);
@@ -80,6 +80,29 @@ describe('BalloonStage', () => {
     expect(useGenderRevealStore.getState().touchCount).toBe(10);
 
     jest.runAllTimers();
+    expect(useGenderRevealStore.getState().step).toBe('result');
+  });
+
+  it('10번 터치 전에는 풍선 보내기 버튼이 비활성화되어 있다', () => {
+    render(<BalloonStage />);
+
+    expect(screen.getByRole('button', { name: '풍선 보내기' })).toBeDisabled();
+  });
+
+  it('10번 터치 후 풍선 보내기 버튼을 누르면 result 단계로 전환한다', async () => {
+    const user = userEvent.setup({ delay: null });
+    render(<BalloonStage />);
+
+    const balloon = screen.getByRole('button', { name: /풍선 터치하기/ });
+    for (let i = 0; i < 10; i += 1) {
+      await user.click(balloon);
+    }
+
+    const sendButton = screen.getByRole('button', { name: '풍선 보내기' });
+    expect(sendButton).toBeEnabled();
+
+    await user.click(sendButton);
+
     expect(useGenderRevealStore.getState().step).toBe('result');
   });
 });
