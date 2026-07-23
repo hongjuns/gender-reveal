@@ -149,7 +149,7 @@ export function StepOneForm() {
 
       <button
         type="submit"
-        className="mt-[35px] flex h-[60px] cursor-pointer items-center justify-center gap-2 rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
+        className="mt-3 flex h-[60px] cursor-pointer items-center justify-center gap-2 rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
       >
         젠더리빌 풍선 만들기
         <span aria-hidden="true">›</span>
