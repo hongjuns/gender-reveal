@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import html2canvas from 'html2canvas';
 import { ResultReveal } from './ResultReveal';
@@ -140,5 +140,28 @@ describe('ResultReveal', () => {
     clickSpy.mockRestore();
     Reflect.deleteProperty(navigator, 'canShare');
     Reflect.deleteProperty(navigator, 'share');
+  });
+
+  it('캡처가 끝나지 않고 멈추면 시간 초과 후 에러를 보여주고 버튼을 되돌린다', async () => {
+    jest.useFakeTimers({ legacyFakeTimers: false });
+    try {
+      seedResultState('son');
+      const user = userEvent.setup({ delay: null });
+      (html2canvas as jest.Mock).mockReturnValue(new Promise(() => {}));
+
+      render(<ResultReveal />);
+
+      await user.click(screen.getByRole('button', { name: '결과 저장하기' }));
+      resolveAllImageLoads();
+
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(12000);
+      });
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('이미지 캡처 시간이 초과되었습니다.');
+      expect(screen.getByRole('button', { name: '결과 저장하기' })).toBeEnabled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

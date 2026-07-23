@@ -7,12 +7,13 @@ import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { formatKstDate } from '@/lib/date';
 
 const SHARE_TIMEOUT_MS = 15000;
+const CAPTURE_TIMEOUT_MS = 12000;
 
-function raceWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+function raceWithTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error('공유 시트 응답 시간이 초과되었습니다.')), timeoutMs);
+      setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
     }),
   ]);
 }
@@ -39,6 +40,7 @@ export function ResultReveal() {
 
   const captureRef = useRef<HTMLDivElement>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   if (!input) {
     return null;
@@ -61,14 +63,20 @@ export function ResultReveal() {
       return;
     }
     setIsSaving(true);
+    setSaveError(null);
     try {
       await waitForImagesToLoad(captureRef.current);
-      const canvas = await html2canvas(captureRef.current, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        allowTaint: false,
-      });
+      const canvas = await raceWithTimeout(
+        html2canvas(captureRef.current, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          imageTimeout: 8000,
+        }),
+        CAPTURE_TIMEOUT_MS,
+        '이미지 캡처 시간이 초과되었습니다.',
+      );
       const dataUrl = canvas.toDataURL('image/png');
       const fileName = `gender-reveal-${babyGender}.png`;
 
@@ -76,7 +84,11 @@ export function ResultReveal() {
       const file = new File([blob], fileName, { type: 'image/png' });
 
       if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
-        await raceWithTimeout(navigator.share({ files: [file], title: '젠더리빌 결과' }), SHARE_TIMEOUT_MS);
+        await raceWithTimeout(
+          navigator.share({ files: [file], title: '젠더리빌 결과' }),
+          SHARE_TIMEOUT_MS,
+          '공유 시트 응답 시간이 초과되었습니다.',
+        );
         return;
       }
 
@@ -88,7 +100,9 @@ export function ResultReveal() {
       if (error instanceof DOMException && error.name === 'AbortError') {
         return;
       }
+      const message = error instanceof Error ? error.message : String(error);
       console.error('결과 이미지 저장에 실패했습니다.', error);
+      setSaveError(message);
     } finally {
       setIsSaving(false);
     }
@@ -112,7 +126,7 @@ export function ResultReveal() {
           height={771}
           aria-hidden="true"
           unoptimized
-          className="mt-6 h-auto w-[min(70px,18vw)] animate-float"
+          className={`mt-6 h-auto w-[min(70px,18vw)] ${isSaving ? '' : 'animate-float'}`}
         />
 
         <Image
@@ -121,7 +135,7 @@ export function ResultReveal() {
           width={imageDimensions.width}
           height={imageDimensions.height}
           unoptimized
-          className={`-mt-1 h-auto ${imageDimensions.sizeClassName} animate-float`}
+          className={`-mt-1 h-auto ${imageDimensions.sizeClassName} ${isSaving ? '' : 'animate-float'}`}
           style={{ animationDelay: '0.3s' }}
         />
 
@@ -155,6 +169,12 @@ export function ResultReveal() {
             {isSaving ? '저장 중...' : '결과 저장하기'}
           </button>
         </div>
+
+        {saveError && (
+          <p className="m-0 mt-3 whitespace-pre-line font-pixel text-sm text-red-600" role="alert">
+            {`저장에 실패했어요: ${saveError}`}
+          </p>
+        )}
 
         <button
           type="button"
