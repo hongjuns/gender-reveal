@@ -109,7 +109,7 @@ export function StepOneForm() {
         />
       </div>
 
-      <fieldset className="mt-14 border-0 p-0">
+      <fieldset className="mt-6 border-0 p-0">
         <legend className="mb-3 font-pixel text-base text-ink">아기 성별</legend>
         <div className="flex gap-2.5">
           <label className="relative flex-1 cursor-pointer">
