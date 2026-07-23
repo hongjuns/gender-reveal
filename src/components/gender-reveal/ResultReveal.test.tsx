@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { toPng } from 'html-to-image';
 import { ResultReveal } from './ResultReveal';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
+
+jest.mock('html-to-image', () => ({
+  toPng: jest.fn(),
+}));
 
 function seedResultState(babyGender: 'son' | 'daughter') {
   useGenderRevealStore.setState(
@@ -76,5 +81,22 @@ describe('ResultReveal', () => {
     const state = useGenderRevealStore.getState();
     expect(state.step).toBe('input');
     expect(state.input).toBeNull();
+  });
+
+  it("'결과 저장하기' 클릭 시 결과 화면을 이미지로 캡처해 다운로드한다", async () => {
+    seedResultState('son');
+    const user = userEvent.setup();
+    (toPng as jest.Mock).mockResolvedValue('data:image/png;base64,fake');
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    render(<ResultReveal />);
+
+    await user.click(screen.getByRole('button', { name: '결과 저장하기' }));
+    await screen.findByRole('button', { name: '결과 저장하기' });
+
+    expect(toPng).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    clickSpy.mockRestore();
   });
 });
