@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toPng } from 'html-to-image';
 import { ResultReveal } from './ResultReveal';
@@ -7,6 +7,14 @@ import { useGenderRevealStore } from '@/stores/genderRevealStore';
 jest.mock('html-to-image', () => ({
   toPng: jest.fn(),
 }));
+
+// jsdom never actually loads <img> sources, so handleSaveResult's image-load wait
+// would hang forever in tests unless we fire the load event ourselves.
+function resolveAllImageLoads() {
+  document.body.querySelectorAll('img').forEach((img) => {
+    fireEvent.load(img);
+  });
+}
 
 function seedResultState(babyGender: 'son' | 'daughter') {
   useGenderRevealStore.setState(
@@ -95,6 +103,7 @@ describe('ResultReveal', () => {
     render(<ResultReveal />);
 
     await user.click(screen.getByRole('button', { name: '결과 저장하기' }));
+    resolveAllImageLoads();
     await screen.findByRole('button', { name: '결과 저장하기' });
 
     expect(toPng).toHaveBeenCalledTimes(1);
@@ -118,6 +127,7 @@ describe('ResultReveal', () => {
     render(<ResultReveal />);
 
     await user.click(screen.getByRole('button', { name: '결과 저장하기' }));
+    resolveAllImageLoads();
     await screen.findByRole('button', { name: '결과 저장하기' });
 
     expect(share).toHaveBeenCalledTimes(1);

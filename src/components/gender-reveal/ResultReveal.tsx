@@ -17,6 +17,21 @@ function raceWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> 
   ]);
 }
 
+function waitForImagesToLoad(container: HTMLElement): Promise<void> {
+  const images = Array.from(container.querySelectorAll('img'));
+  return Promise.all(
+    images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) {
+        return Promise.resolve();
+      }
+      return new Promise<void>((resolve) => {
+        img.addEventListener('load', () => resolve(), { once: true });
+        img.addEventListener('error', () => resolve(), { once: true });
+      });
+    }),
+  ).then(() => undefined);
+}
+
 export function ResultReveal() {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
@@ -47,9 +62,11 @@ export function ResultReveal() {
     }
     setIsSaving(true);
     try {
+      await waitForImagesToLoad(captureRef.current);
       const dataUrl = await toPng(captureRef.current, {
         pixelRatio: 2,
         backgroundColor: '#ffffff',
+        cacheBust: true,
       });
       const fileName = `gender-reveal-${babyGender}.png`;
 
@@ -92,6 +109,7 @@ export function ResultReveal() {
           width={931}
           height={771}
           aria-hidden="true"
+          unoptimized
           className="mt-6 h-auto w-[min(70px,18vw)] animate-float"
         />
 
@@ -100,6 +118,7 @@ export function ResultReveal() {
           alt={imageAlt}
           width={imageDimensions.width}
           height={imageDimensions.height}
+          unoptimized
           className={`-mt-1 h-auto ${imageDimensions.sizeClassName} animate-float`}
           style={{ animationDelay: '0.3s' }}
         />
@@ -117,7 +136,7 @@ export function ResultReveal() {
       </div>
 
       <div className="flex w-full flex-col items-center px-6 pb-6">
-        <div className="mt-10 flex w-full gap-2.5">
+        <div className="mt-0 flex w-full gap-2.5">
           <button
             type="button"
             className="h-[60px] flex-1 cursor-pointer rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
@@ -137,7 +156,7 @@ export function ResultReveal() {
 
         <button
           type="button"
-          className="mt-0 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
+          className="mt-3 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
           onClick={resetAll}
         >
           젠더리빌 새로 만들기
