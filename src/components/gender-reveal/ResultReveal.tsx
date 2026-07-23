@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import Image from 'next/image';
-import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { formatKstDate } from '@/lib/date';
 
@@ -63,11 +63,13 @@ export function ResultReveal() {
     setIsSaving(true);
     try {
       await waitForImagesToLoad(captureRef.current);
-      const dataUrl = await toPng(captureRef.current, {
-        pixelRatio: 2,
+      const canvas = await html2canvas(captureRef.current, {
+        scale: 2,
         backgroundColor: '#ffffff',
-        cacheBust: true,
+        useCORS: true,
+        allowTaint: false,
       });
+      const dataUrl = canvas.toDataURL('image/png');
       const fileName = `gender-reveal-${babyGender}.png`;
 
       const blob = await (await fetch(dataUrl)).blob();

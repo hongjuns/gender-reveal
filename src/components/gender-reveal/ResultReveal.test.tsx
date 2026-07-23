@@ -1,12 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { toPng } from 'html-to-image';
+import html2canvas from 'html2canvas';
 import { ResultReveal } from './ResultReveal';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 
-jest.mock('html-to-image', () => ({
-  toPng: jest.fn(),
-}));
+jest.mock('html2canvas', () => jest.fn());
+
+function mockCanvasResult() {
+  (html2canvas as jest.Mock).mockResolvedValue({
+    toDataURL: () => 'data:image/png;base64,fake',
+  });
+}
 
 // jsdom never actually loads <img> sources, so handleSaveResult's image-load wait
 // would hang forever in tests unless we fire the load event ourselves.
@@ -94,7 +98,7 @@ describe('ResultReveal', () => {
   it("'결과 저장하기' 클릭 시 공유 API를 지원하지 않으면 파일을 다운로드한다", async () => {
     seedResultState('son');
     const user = userEvent.setup();
-    (toPng as jest.Mock).mockResolvedValue('data:image/png;base64,fake');
+    mockCanvasResult();
     global.fetch = jest
       .fn()
       .mockResolvedValue({ blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/png' })) }) as jest.Mock;
@@ -106,7 +110,7 @@ describe('ResultReveal', () => {
     resolveAllImageLoads();
     await screen.findByRole('button', { name: '결과 저장하기' });
 
-    expect(toPng).toHaveBeenCalledTimes(1);
+    expect(html2canvas).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
     clickSpy.mockRestore();
@@ -115,7 +119,7 @@ describe('ResultReveal', () => {
   it("'결과 저장하기' 클릭 시 공유 API를 지원하면(iOS 등) 다운로드 대신 공유 시트를 띄운다", async () => {
     seedResultState('son');
     const user = userEvent.setup();
-    (toPng as jest.Mock).mockResolvedValue('data:image/png;base64,fake');
+    mockCanvasResult();
     global.fetch = jest
       .fn()
       .mockResolvedValue({ blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/png' })) }) as jest.Mock;
