@@ -83,10 +83,13 @@ describe('ResultReveal', () => {
     expect(state.input).toBeNull();
   });
 
-  it("'결과 저장하기' 클릭 시 결과 화면을 이미지로 캡처해 다운로드한다", async () => {
+  it("'결과 저장하기' 클릭 시 공유 API를 지원하지 않으면 파일을 다운로드한다", async () => {
     seedResultState('son');
     const user = userEvent.setup();
     (toPng as jest.Mock).mockResolvedValue('data:image/png;base64,fake');
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/png' })) }) as jest.Mock;
     const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
     render(<ResultReveal />);
@@ -98,5 +101,30 @@ describe('ResultReveal', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
     clickSpy.mockRestore();
+  });
+
+  it("'결과 저장하기' 클릭 시 공유 API를 지원하면(iOS 등) 다운로드 대신 공유 시트를 띄운다", async () => {
+    seedResultState('son');
+    const user = userEvent.setup();
+    (toPng as jest.Mock).mockResolvedValue('data:image/png;base64,fake');
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ blob: () => Promise.resolve(new Blob(['fake'], { type: 'image/png' })) }) as jest.Mock;
+    const canShare = jest.fn().mockReturnValue(true);
+    const share = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { canShare, share });
+    const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+
+    render(<ResultReveal />);
+
+    await user.click(screen.getByRole('button', { name: '결과 저장하기' }));
+    await screen.findByRole('button', { name: '결과 저장하기' });
+
+    expect(share).toHaveBeenCalledTimes(1);
+    expect(clickSpy).not.toHaveBeenCalled();
+
+    clickSpy.mockRestore();
+    Reflect.deleteProperty(navigator, 'canShare');
+    Reflect.deleteProperty(navigator, 'share');
   });
 });

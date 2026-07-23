@@ -6,6 +6,17 @@ import { toPng } from 'html-to-image';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { formatKstDate } from '@/lib/date';
 
+const SHARE_TIMEOUT_MS = 15000;
+
+function raceWithTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error('공유 시트 응답 시간이 초과되었습니다.')), timeoutMs);
+    }),
+  ]);
+}
+
 export function ResultReveal() {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
@@ -40,11 +51,24 @@ export function ResultReveal() {
         pixelRatio: 2,
         backgroundColor: '#ffffff',
       });
+      const fileName = `gender-reveal-${babyGender}.png`;
+
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], fileName, { type: 'image/png' });
+
+      if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+        await raceWithTimeout(navigator.share({ files: [file], title: '젠더리빌 결과' }), SHARE_TIMEOUT_MS);
+        return;
+      }
+
       const link = document.createElement('a');
-      link.download = `gender-reveal-${babyGender}.png`;
+      link.download = fileName;
       link.href = dataUrl;
       link.click();
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       console.error('결과 이미지 저장에 실패했습니다.', error);
     } finally {
       setIsSaving(false);
@@ -113,7 +137,7 @@ export function ResultReveal() {
 
         <button
           type="button"
-          className="mt-6 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
+          className="mt-0 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
           onClick={resetAll}
         >
           젠더리빌 새로 만들기
