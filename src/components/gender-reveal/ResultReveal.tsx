@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
@@ -33,20 +33,87 @@ function waitForImagesToLoad(container: HTMLElement): Promise<void> {
   ).then(() => undefined);
 }
 
+interface PreparedImage {
+  dataUrl: string;
+  file: File;
+}
+
 export function ResultReveal() {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
   const resetAll = useGenderRevealStore((state) => state.resetAll);
 
   const captureRef = useRef<HTMLDivElement>(null);
+  const [preparedImage, setPreparedImage] = useState<PreparedImage | null>(null);
+  const [isPreparing, setIsPreparing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const babyGender = input?.babyGender;
+
+  async function prepareImage(babyGenderValue: string, isCancelled: () => boolean) {
+    if (!captureRef.current) {
+      return;
+    }
+    setIsPreparing(true);
+    setSaveError(null);
+    try {
+      await waitForImagesToLoad(captureRef.current);
+      const canvas = await raceWithTimeout(
+        html2canvas(captureRef.current as HTMLElement, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          imageTimeout: 8000,
+        }),
+        CAPTURE_TIMEOUT_MS,
+        '이미지 캡처 시간이 초과되었습니다.',
+      );
+      if (isCancelled()) {
+        return;
+      }
+      const dataUrl = canvas.toDataURL('image/png');
+      const blob = await (await fetch(dataUrl)).blob();
+      const file = new File([blob], `gender-reveal-${babyGenderValue}.png`, { type: 'image/png' });
+      if (!isCancelled()) {
+        setPreparedImage({ dataUrl, file });
+      }
+    } catch (error) {
+      if (isCancelled()) {
+        return;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('결과 이미지를 준비하지 못했습니다.', error);
+      setSaveError(message);
+    } finally {
+      if (!isCancelled()) {
+        setIsPreparing(false);
+      }
+    }
+  }
+
+  // Pre-render the result card into an image as soon as it's shown, rather than
+  // at click-time: iOS Safari only allows navigator.share() while the click's
+  // "user activation" is still fresh, and the multi-second html2canvas capture
+  // was consuming that window, causing share() to reject with NotAllowedError.
+  useEffect(() => {
+    if (!babyGender) {
+      return undefined;
+    }
+    let cancelled = false;
+    prepareImage(babyGender, () => cancelled);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [babyGender]);
 
   if (!input) {
     return null;
   }
 
-  const { babyNickname, dueDate, recipientName, babyGender } = input;
+  const { babyNickname, dueDate, recipientName, babyGender: currentBabyGender } = input;
   const isSon = babyGender === 'son';
   const genderLabel = isSon ? '아들' : '딸';
   const imageSrc = isSon ? '/img/step3/baby-son.png' : '/img/step3/baby-daughter.png';
@@ -59,29 +126,20 @@ export function ResultReveal() {
     : { width: 298, height: 347, sizeClassName: 'w-[min(200px,51vw)]' };
 
   async function handleSaveResult() {
-    if (!captureRef.current || isSaving) {
+    if (isPreparing || isSaving) {
+      return;
+    }
+    if (!preparedImage) {
+      // A previous prepare attempt failed (e.g. timed out) — retry on this click
+      // rather than leaving the button permanently dead. The user taps again
+      // once it succeeds to actually share/download.
+      await prepareImage(currentBabyGender, () => false);
       return;
     }
     setIsSaving(true);
     setSaveError(null);
     try {
-      await waitForImagesToLoad(captureRef.current);
-      const canvas = await raceWithTimeout(
-        html2canvas(captureRef.current, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          allowTaint: false,
-          imageTimeout: 8000,
-        }),
-        CAPTURE_TIMEOUT_MS,
-        '이미지 캡처 시간이 초과되었습니다.',
-      );
-      const dataUrl = canvas.toDataURL('image/png');
-      const fileName = `gender-reveal-${babyGender}.png`;
-
-      const blob = await (await fetch(dataUrl)).blob();
-      const file = new File([blob], fileName, { type: 'image/png' });
+      const { dataUrl, file } = preparedImage;
 
       if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
         await raceWithTimeout(
@@ -93,7 +151,7 @@ export function ResultReveal() {
       }
 
       const link = document.createElement('a');
-      link.download = fileName;
+      link.download = file.name;
       link.href = dataUrl;
       link.click();
     } catch (error) {
@@ -126,7 +184,7 @@ export function ResultReveal() {
           height={771}
           aria-hidden="true"
           unoptimized
-          className={`mt-6 h-auto w-[min(70px,18vw)] ${isSaving ? '' : 'animate-float'}`}
+          className={`mt-6 h-auto w-[min(70px,18vw)] ${isPreparing ? '' : 'animate-float'}`}
         />
 
         <Image
@@ -135,7 +193,7 @@ export function ResultReveal() {
           width={imageDimensions.width}
           height={imageDimensions.height}
           unoptimized
-          className={`-mt-1 h-auto ${imageDimensions.sizeClassName} ${isSaving ? '' : 'animate-float'}`}
+          className={`-mt-1 h-auto ${imageDimensions.sizeClassName} ${isPreparing ? '' : 'animate-float'}`}
           style={{ animationDelay: '0.3s' }}
         />
 
@@ -164,9 +222,9 @@ export function ResultReveal() {
             type="button"
             className="h-[60px] flex-1 cursor-pointer rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={handleSaveResult}
-            disabled={isSaving}
+            disabled={isPreparing || isSaving}
           >
-            {isSaving ? '저장 중...' : '결과 저장하기'}
+            {isSaving ? '저장 중...' : isPreparing ? '이미지 준비 중...' : '결과 저장하기'}
           </button>
         </div>
 
