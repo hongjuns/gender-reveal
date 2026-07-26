@@ -118,6 +118,21 @@ describe('ResultReveal', () => {
     expect(state.input).toBeNull();
   });
 
+  it("onCreateNew prop이 주어지면 '젠더리빌 새로 만들기' 클릭 시 resetAll 대신 해당 콜백을 호출한다", async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    const user = userEvent.setup();
+    const onCreateNew = jest.fn();
+    render(<ResultReveal onCreateNew={onCreateNew} />);
+
+    await user.click(screen.getByRole('button', { name: '젠더리빌 새로 만들기' }));
+
+    expect(onCreateNew).toHaveBeenCalledTimes(1);
+    const state = useGenderRevealStore.getState();
+    expect(state.step).toBe('result');
+    expect(state.input).not.toBeNull();
+  });
+
   it("'결과 저장하기' 클릭 시 공유 API를 지원하지 않으면 파일을 다운로드한다", async () => {
     seedResultState('son');
     mockCanvasSuccess();

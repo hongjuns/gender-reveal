@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import type { AppStep, GenderRevealInput } from '@/types/genderReveal';
+import type { AppStep, GenderRevealEventRecord, GenderRevealInput } from '@/types/genderReveal';
+import { parseDateInputValue } from '@/lib/date';
 
 const TOUCH_TARGET = 10;
 
@@ -11,6 +12,7 @@ interface GenderRevealState {
   touchCount: number;
   isBursting: boolean;
   setInput: (input: GenderRevealInput) => SetInputResult;
+  hydrateFromEvent: (event: GenderRevealEventRecord) => void;
   touchBalloon: () => void;
   completeBurstTransition: () => void;
   restart: () => void;
@@ -39,6 +41,21 @@ export const useGenderRevealStore = create<GenderRevealState>((set, get) => ({
     }
     set({ input, step: 'interaction', touchCount: 0, isBursting: false });
     return { ok: true };
+  },
+
+  hydrateFromEvent: (event) => {
+    const dueDate = parseDateInputValue(event.dueDate) ?? new Date(event.dueDate);
+    set({
+      input: {
+        babyNickname: event.babyNickname,
+        dueDate,
+        recipientName: event.recipientName,
+        babyGender: event.babyGender,
+      },
+      step: 'interaction',
+      touchCount: 0,
+      isBursting: false,
+    });
   },
 
   touchBalloon: () => {

@@ -13,3 +13,19 @@ export interface BalloonInteractionState {
   touchCount: number;
   isBursting: boolean;
 }
+
+export interface GenderRevealEventRecord {
+  id: string;
+  babyNickname: string;
+  dueDate: string;
+  recipientName: string;
+  babyGender: BabyGender;
+  shareLink: string;
+  createdAt: string;
+  linkExpiresAt: string;
+}
+
+export type GetEventResult =
+  | { status: 'ok'; event: GenderRevealEventRecord }
+  | { status: 'expired' }
+  | { status: 'not_found' };

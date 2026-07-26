@@ -38,10 +38,15 @@ interface PreparedImage {
   file: File;
 }
 
-export function ResultReveal() {
+interface ResultRevealProps {
+  onCreateNew?: () => void;
+}
+
+export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
   const resetAll = useGenderRevealStore((state) => state.resetAll);
+  const handleCreateNew = onCreateNew ?? resetAll;
 
   const captureRef = useRef<HTMLDivElement>(null);
   const [preparedImage, setPreparedImage] = useState<PreparedImage | null>(null);
@@ -213,7 +218,7 @@ export function ResultReveal() {
         <div className="mt-0 flex w-full gap-2.5">
           <button
             type="button"
-            className="h-[60px] flex-1 cursor-pointer rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
+            className="h-[60px] flex-1 cursor-pointer rounded border-0 bg-input-bg font-pixel text-base text-ink transition hover:bg-input-bg/70"
             onClick={restart}
           >
             {'<  뒤로가기'}
@@ -237,7 +242,7 @@ export function ResultReveal() {
         <button
           type="button"
           className="mt-3 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
-          onClick={resetAll}
+          onClick={handleCreateNew}
         >
           젠더리빌 새로 만들기
         </button>

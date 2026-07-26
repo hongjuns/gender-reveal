@@ -1,4 +1,6 @@
-import { format } from 'date-fns';
+import { addDays, isAfter, format } from 'date-fns';
+
+const LINK_VALIDITY_DAYS = 7;
 
 /**
  * KST(UTC+9, 서머타임 없음)는 고정 오프셋이므로 별도 타임존 변환 없이
@@ -31,4 +33,17 @@ export function parseDateInputValue(value: string): Date | null {
     return null;
   }
   return date;
+}
+
+/**
+ * 공유 링크의 만료 시각(생성 시각 + 7일)을 계산한다. KST는 서머타임이 없는 고정
+ * UTC+9라 서버의 로컬 타임존과 무관하게 순수 시간 간격(7일) 계산으로 충분하다
+ * (research.md #4).
+ */
+export function calculateLinkExpiresAt(createdAt: Date): Date {
+  return addDays(createdAt, LINK_VALIDITY_DAYS);
+}
+
+export function isLinkExpired(linkExpiresAt: Date, now: Date = new Date()): boolean {
+  return isAfter(now, linkExpiresAt);
 }

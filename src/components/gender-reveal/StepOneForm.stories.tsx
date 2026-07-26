@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { expect, fireEvent, userEvent, within } from 'storybook/test';
 import { StepOneForm } from './StepOneForm';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
@@ -14,6 +15,16 @@ const meta: Meta<typeof StepOneForm> = {
   title: 'GenderReveal/StepOneForm',
   component: StepOneForm,
   parameters: { layout: 'centered' },
+  decorators: [
+    (Story) => {
+      const queryClient = new QueryClient();
+      return (
+        <QueryClientProvider client={queryClient}>
+          <Story />
+        </QueryClientProvider>
+      );
+    },
+  ],
 };
 
 export default meta;

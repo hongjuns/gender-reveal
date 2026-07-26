@@ -125,14 +125,8 @@ export function BalloonStage() {
 
       <p className="m-0 mt-16 font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
       <p className="m-0 mt-2 font-pixel text-lg text-ink-muted">{touchCount} / 10</p>
-
-      <button
-        type="button"
-        className="mt-6 h-[60px] w-full cursor-pointer rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-40"
-        onClick={completeBurstTransition}
-      >
-        풍선 보내기
-      </button>
+  
+      
     </section>
   );
 }

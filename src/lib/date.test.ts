@@ -1,4 +1,4 @@
-import { formatKstDate, parseDateInputValue } from './date';
+import { calculateLinkExpiresAt, formatKstDate, isLinkExpired, parseDateInputValue } from './date';
 
 describe('formatKstDate', () => {
   it("'yyyy년 MM월 dd일' 형식으로 변환한다", () => {
@@ -26,5 +26,27 @@ describe('parseDateInputValue', () => {
 
   it('존재하지 않는 날짜(예: 2월 30일)는 null을 반환한다', () => {
     expect(parseDateInputValue('2026-02-30')).toBeNull();
+  });
+});
+
+describe('calculateLinkExpiresAt', () => {
+  it('생성 시각으로부터 정확히 7일 뒤 시각을 반환한다', () => {
+    const createdAt = new Date('2026-07-18T00:00:00.000Z');
+    const expiresAt = calculateLinkExpiresAt(createdAt);
+    expect(expiresAt.getTime() - createdAt.getTime()).toBe(7 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe('isLinkExpired', () => {
+  it('만료 시각 이전이면 false를 반환한다', () => {
+    const expiresAt = new Date('2026-07-25T00:00:00.000Z');
+    const now = new Date('2026-07-24T23:00:00.000Z');
+    expect(isLinkExpired(expiresAt, now)).toBe(false);
+  });
+
+  it('만료 시각을 지나면 true를 반환한다', () => {
+    const expiresAt = new Date('2026-07-25T00:00:00.000Z');
+    const now = new Date('2026-07-25T00:00:01.000Z');
+    expect(isLinkExpired(expiresAt, now)).toBe(true);
   });
 });

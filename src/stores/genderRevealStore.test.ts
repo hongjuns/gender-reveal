@@ -1,5 +1,5 @@
 import { useGenderRevealStore } from './genderRevealStore';
-import type { GenderRevealInput } from '@/types/genderReveal';
+import type { GenderRevealEventRecord, GenderRevealInput } from '@/types/genderReveal';
 
 const validInput: GenderRevealInput = {
   babyNickname: '콩이',
@@ -59,6 +59,43 @@ describe('setInput', () => {
       .setInput({ ...validInput, dueDate: new Date('invalid') });
 
     expect(result).toEqual({ ok: false, error: 'MISSING_FIELDS' });
+  });
+});
+
+describe('hydrateFromEvent', () => {
+  const event: GenderRevealEventRecord = {
+    id: 'event-1',
+    babyNickname: '콩이',
+    dueDate: '2026-12-25',
+    recipientName: '지민',
+    babyGender: 'daughter',
+    shareLink: 'event-1',
+    createdAt: '2026-07-18T00:00:00.000Z',
+    linkExpiresAt: '2026-07-25T00:00:00.000Z',
+  };
+
+  it('서버 이벤트로 input을 채우고 interaction 단계로 진입시킨다', () => {
+    useGenderRevealStore.getState().hydrateFromEvent(event);
+
+    const state = useGenderRevealStore.getState();
+    expect(state.step).toBe('interaction');
+    expect(state.touchCount).toBe(0);
+    expect(state.isBursting).toBe(false);
+    expect(state.input).toEqual({
+      babyNickname: '콩이',
+      dueDate: new Date(2026, 11, 25),
+      recipientName: '지민',
+      babyGender: 'daughter',
+    });
+  });
+
+  it('이미 풍선을 터치한 상태에서 호출해도 touchCount를 0으로 초기화한다', () => {
+    useGenderRevealStore.getState().setInput(validInput);
+    useGenderRevealStore.getState().touchBalloon();
+
+    useGenderRevealStore.getState().hydrateFromEvent(event);
+
+    expect(useGenderRevealStore.getState().touchCount).toBe(0);
   });
 });
 
