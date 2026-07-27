@@ -11,9 +11,6 @@ interface LinkGeneratedModalProps {
 const primaryButtonClassName =
   'flex h-[61px] w-full cursor-pointer items-center justify-center rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90';
 
-const secondaryButtonClassName =
-  'flex h-[61px] w-full cursor-pointer items-center justify-center rounded border-0 bg-input-bg font-pixel text-base text-ink transition hover:bg-input-bg/70';
-
 export function LinkGeneratedModal({ shareLink, onClose }: LinkGeneratedModalProps) {
   const [copyError, setCopyError] = useState(false);
   const [showToast, setShowToast] = useState(false);
@@ -42,10 +39,6 @@ export function LinkGeneratedModal({ shareLink, onClose }: LinkGeneratedModalPro
     } catch {
       setCopyError(true);
     }
-  }
-
-  function handlePreview() {
-    window.open(shareLink, '_blank', 'noopener,noreferrer');
   }
 
   return (
@@ -82,9 +75,6 @@ export function LinkGeneratedModal({ shareLink, onClose }: LinkGeneratedModalPro
           <button type="button" onClick={handleCopy} className={primaryButtonClassName}>
             공유 링크 복사
           </button>
-          <button type="button" onClick={handlePreview} className={secondaryButtonClassName}>
-            풍선 미리보기
-          </button>
         </div>
 
         {copyError && (
@@ -97,7 +87,7 @@ export function LinkGeneratedModal({ shareLink, onClose }: LinkGeneratedModalPro
       {showToast && (
         <div
           role="status"
-          className="fixed inset-x-0 bottom-8 z-[60] flex justify-center px-4"
+          className="fixed inset-x-0 top-8 z-[60] flex justify-center px-4"
           onClick={(event) => event.stopPropagation()}
         >
           <p className="m-0 rounded bg-ink px-4 py-2 font-pixel text-sm text-white shadow-lg">

@@ -7,7 +7,25 @@ import { parseDateInputValue } from '@/lib/date';
 import { LinkGeneratedModal } from './LinkGeneratedModal';
 
 const inputClassName =
-  'h-12 w-full appearance-none rounded border-0 bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
+  'h-12 w-full appearance-none rounded border bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
+
+type FieldErrors = {
+  babyNickname: boolean;
+  dueDate: boolean;
+  recipientName: boolean;
+  babyGender: boolean;
+};
+
+const initialFieldErrors: FieldErrors = {
+  babyNickname: false,
+  dueDate: false,
+  recipientName: false,
+  babyGender: false,
+};
+
+function fieldBorderClassName(hasError: boolean) {
+  return hasError ? 'border-red-500' : 'border-transparent';
+}
 
 export function StepOneForm() {
   const createEvent = useCreateGenderRevealEvent();
@@ -20,19 +38,25 @@ export function StepOneForm() {
   const [recipientName, setRecipientName] = useState('');
   const [babyGender, setBabyGender] = useState<BabyGender | ''>('');
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>(initialFieldErrors);
   const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const dueDate = parseDateInputValue(dueDateValue);
+    const isBabyNicknameEmpty = babyNickname.trim().length === 0;
+    const isDueDateInvalid = dueDate === null;
+    const isRecipientNameEmpty = recipientName.trim().length === 0;
 
-    if (
-      babyNickname.trim().length === 0 ||
-      dueDate === null ||
-      recipientName.trim().length === 0 ||
-      babyGender === ''
-    ) {
+    setFieldErrors({
+      babyNickname: isBabyNicknameEmpty,
+      dueDate: isDueDateInvalid,
+      recipientName: isRecipientNameEmpty,
+      babyGender: babyGender === '',
+    });
+
+    if (isBabyNicknameEmpty || isDueDateInvalid || isRecipientNameEmpty || babyGender === '') {
       setError('정보를 모두 입력해주세요');
       return;
     }
@@ -75,9 +99,12 @@ export function StepOneForm() {
           <input
             id={nicknameId}
             type="text"
-            className={inputClassName}
+            className={`${inputClassName} ${fieldBorderClassName(fieldErrors.babyNickname)}`}
             value={babyNickname}
-            onChange={(event) => setBabyNickname(event.target.value)}
+            onChange={(event) => {
+              setBabyNickname(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, babyNickname: false }));
+            }}
             placeholder="예시: 깡총이"
           />
         </div>
@@ -90,9 +117,12 @@ export function StepOneForm() {
             <input
               id={dueDateId}
               type="date"
-              className={`${inputClassName} ${dueDateValue ? '' : 'text-transparent'}`}
+              className={`${inputClassName} text-left ${fieldBorderClassName(fieldErrors.dueDate)} ${dueDateValue ? '' : 'text-transparent'}`}
               value={dueDateValue}
-              onChange={(event) => setDueDateValue(event.target.value)}
+              onChange={(event) => {
+                setDueDateValue(event.target.value);
+                setFieldErrors((prev) => ({ ...prev, dueDate: false }));
+              }}
             />
             {!dueDateValue && (
               <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-base text-ink-muted">
@@ -109,23 +139,31 @@ export function StepOneForm() {
           <input
             id={recipientId}
             type="text"
-            className={inputClassName}
+            className={`${inputClassName} ${fieldBorderClassName(fieldErrors.recipientName)}`}
             value={recipientName}
-            onChange={(event) => setRecipientName(event.target.value)}
+            onChange={(event) => {
+              setRecipientName(event.target.value);
+              setFieldErrors((prev) => ({ ...prev, recipientName: false }));
+            }}
             placeholder="예시: 할머니, 할아버지"
           />
         </div>
 
         <fieldset className="mt-6 border-0 p-0">
           <legend className="mb-3 font-pixel text-base text-ink">아기 성별</legend>
-          <div className="flex gap-2.5">
+          <div
+            className={`flex gap-2.5 rounded ${fieldErrors.babyGender ? 'outline outline-2 outline-offset-2 outline-red-500' : ''}`}
+          >
             <label className="relative flex-1 cursor-pointer">
               <input
                 type="radio"
                 name="babyGender"
                 value="son"
                 checked={babyGender === 'son'}
-                onChange={() => setBabyGender('son')}
+                onChange={() => {
+                  setBabyGender('son');
+                  setFieldErrors((prev) => ({ ...prev, babyGender: false }));
+                }}
                 className="peer sr-only"
               />
               <span className="flex h-[50px] items-center justify-center rounded bg-boy-bg font-pixel text-base text-ink transition-all peer-checked:ring-2 peer-checked:ring-ink peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">
@@ -138,7 +176,10 @@ export function StepOneForm() {
                 name="babyGender"
                 value="daughter"
                 checked={babyGender === 'daughter'}
-                onChange={() => setBabyGender('daughter')}
+                onChange={() => {
+                  setBabyGender('daughter');
+                  setFieldErrors((prev) => ({ ...prev, babyGender: false }));
+                }}
                 className="peer sr-only"
               />
               <span className="flex h-[50px] items-center justify-center rounded bg-girl-bg font-pixel text-base text-ink transition-all peer-checked:ring-2 peer-checked:ring-ink peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400">

@@ -198,7 +198,7 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           width={imageDimensions.width}
           height={imageDimensions.height}
           unoptimized
-          className={`-mt-1 h-auto ${imageDimensions.sizeClassName} ${isPreparing ? '' : 'animate-float'}`}
+          className={`mt-3 h-auto ${imageDimensions.sizeClassName} ${isPreparing ? '' : 'animate-float'}`}
           style={{ animationDelay: '0.3s' }}
         />
 
@@ -206,7 +206,7 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           data-testid="result-closing"
           className="m-0 mt-4 whitespace-pre-line font-pixel leading-[30px] text-ink"
         >
-          <span className="text-lg">{`${recipientName}님!`}</span>
+          <span className="text-lg">{`${recipientName}!`}</span>
           {'\n'}
           <span className={`text-2xl ${pointColorClassName}`}>{`${dateText}에`}</span>
           {'\n'}
@@ -241,7 +241,7 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
 
         <button
           type="button"
-          className="mt-3 cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
+          className="mt-[30px] cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
           onClick={handleCreateNew}
         >
           젠더리빌 새로 만들기
