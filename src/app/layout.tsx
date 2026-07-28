@@ -15,8 +15,24 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://baby.bunnyverse.app"),
   title: "젠더리빌 | Gender Reveal",
   description: "풍선을 터뜨려 아기의 성별을 확인해보세요",
+  openGraph: {
+    title: "젠더리빌 | Gender Reveal",
+    description: "풍선을 터뜨려 아기의 성별을 확인해보세요",
+    url: "/gender-reveal",
+    siteName: "젠더리빌",
+    images: [
+      {
+        url: "/img/Thumbnail.png",
+        width: 1729,
+        height: 910,
+      },
+    ],
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
