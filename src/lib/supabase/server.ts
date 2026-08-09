@@ -11,6 +11,14 @@ export interface GenderRevealEventRow {
   created_at: string;
 }
 
+export interface GenderRevealCommentRow {
+  id: string;
+  event_id: string;
+  sender_name: string;
+  content: string;
+  created_at: string;
+}
+
 // Supabase의 GenericSchema는 Tables/Views 값 타입에 대한 구조적 assignability를 요구하는데,
 // named interface를 그대로 참조하면 인덱스 시그니처 호환 체크가 깨진다. 순수 매핑 타입으로
 // "fresh"하게 펼쳐 통과시킨다.
@@ -23,6 +31,12 @@ interface Database {
         Row: Fresh<GenderRevealEventRow>;
         Insert: Fresh<GenderRevealEventRow>;
         Update: Fresh<Partial<GenderRevealEventRow>>;
+        Relationships: [];
+      };
+      gender_reveal_comments: {
+        Row: Fresh<GenderRevealCommentRow>;
+        Insert: Fresh<Omit<GenderRevealCommentRow, 'id' | 'created_at'>>;
+        Update: Fresh<Partial<GenderRevealCommentRow>>;
         Relationships: [];
       };
     };

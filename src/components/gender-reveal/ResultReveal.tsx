@@ -5,6 +5,9 @@ import Image from 'next/image';
 import html2canvas from 'html2canvas';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { formatKstDate } from '@/lib/date';
+import { CommentModal } from './CommentModal';
+import { CommentWriteView } from './CommentWriteView';
+import { CommentCarousel } from './CommentCarousel';
 
 const SHARE_TIMEOUT_MS = 15000;
 const CAPTURE_TIMEOUT_MS = 12000;
@@ -40,9 +43,10 @@ interface PreparedImage {
 
 interface ResultRevealProps {
   onCreateNew?: () => void;
+  eventId?: string;
 }
 
-export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
+export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
   const resetAll = useGenderRevealStore((state) => state.resetAll);
@@ -53,6 +57,8 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
   const [isPreparing, setIsPreparing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [commentModalView, setCommentModalView] = useState<'write' | 'list'>('write');
 
   const babyGender = input?.babyGender;
 
@@ -171,8 +177,24 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
     }
   }
 
+  const heartIconSrc = isSon ? '/img/step2/heart-blue.png' : '/img/step2/heart-pink.png';
+
   return (
-    <section className="flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
+    <section className="relative flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
+      {eventId && (
+        <button
+          type="button"
+          aria-label="덕담 남기기"
+          className="absolute right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
+          onClick={() => {
+            setCommentModalView('write');
+            setIsCommentModalOpen(true);
+          }}
+        >
+          <Image src={heartIconSrc} alt="" width={36} height={36} unoptimized />
+        </button>
+      )}
+
       <div ref={captureRef} className="flex w-full flex-col items-center bg-white p-6">
         <p
           data-testid="result-message"
@@ -247,6 +269,24 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           젠더리빌 새로 만들기
         </button>
       </div>
+
+      {eventId && (
+        <CommentModal
+          isOpen={isCommentModalOpen}
+          view={commentModalView}
+          onClose={() => setIsCommentModalOpen(false)}
+        >
+          {commentModalView === 'write' ? (
+            <CommentWriteView eventId={eventId} onViewList={() => setCommentModalView('list')} />
+          ) : (
+            <CommentCarousel
+              eventId={eventId}
+              babyNickname={babyNickname}
+              onViewWrite={() => setCommentModalView('write')}
+            />
+          )}
+        </CommentModal>
+      )}
     </section>
   );
 }

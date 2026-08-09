@@ -74,7 +74,9 @@ export default function SharedGenderRevealPage({ params, searchParams }: SharedG
         </div>
       )}
       {step === 'interaction' && <BalloonStage />}
-      {step === 'result' && <ResultReveal onCreateNew={() => router.push('/gender-reveal')} />}
+      {step === 'result' && (
+        <ResultReveal eventId={id} onCreateNew={() => router.push('/gender-reveal')} />
+      )}
     </main>
   );
 }

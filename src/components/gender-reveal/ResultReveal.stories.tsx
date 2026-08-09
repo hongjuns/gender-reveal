@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { expect, userEvent, within } from 'storybook/test';
 import { ResultReveal } from './ResultReveal';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
 
@@ -40,5 +41,22 @@ export const DaughterResult: Story = {
   name: '딸 결과',
   play: async () => {
     seedState('daughter');
+  },
+};
+
+export const WithCommentModal: Story = {
+  name: '댓글 모달 오픈',
+  args: {
+    eventId: '8f14e45f-ceea-467e-8f14-e45fceea467e',
+  },
+  play: async ({ canvasElement }) => {
+    seedState('son');
+    const canvas = within(canvasElement);
+    const user = userEvent.setup();
+
+    const heartButton = await canvas.findByRole('button', { name: '덕담 남기기' });
+    await user.click(heartButton);
+
+    await expect(canvas.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
   },
 };
