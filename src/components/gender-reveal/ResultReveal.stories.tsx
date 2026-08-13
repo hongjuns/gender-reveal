@@ -1,7 +1,20 @@
+import type { ReactNode } from 'react';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { expect, userEvent, within } from 'storybook/test';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ResultReveal } from './ResultReveal';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
+
+function QueryClientDecorator(Story: () => ReactNode) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Story />
+    </QueryClientProvider>
+  );
+}
 
 function seedState(babyGender: 'son' | 'daughter') {
   useGenderRevealStore.setState(
@@ -24,6 +37,7 @@ const meta: Meta<typeof ResultReveal> = {
   title: 'GenderReveal/ResultReveal',
   component: ResultReveal,
   parameters: { layout: 'centered' },
+  decorators: [QueryClientDecorator],
 };
 
 export default meta;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
+import { useEventComments } from '@/hooks/useEventComments';
 import { formatKstDate } from '@/lib/date';
 import { CommentModal } from './CommentModal';
 import { CommentWriteView } from './CommentWriteView';
@@ -59,6 +60,8 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [commentModalView, setCommentModalView] = useState<'write' | 'list'>('write');
+  const { data: commentsData } = useEventComments(eventId ?? '', Boolean(eventId));
+  const hasComments = commentsData?.status === 'ok' && commentsData.comments.length > 0;
 
   const babyGender = input?.babyGender;
 
@@ -177,21 +180,30 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
     }
   }
 
-  const heartIconSrc = isSon ? '/img/step2/heart-blue.png' : '/img/step2/heart-pink.png';
-
   return (
     <section className="relative flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
       {eventId && (
         <button
           type="button"
           aria-label="덕담 남기기"
-          className="absolute right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
+          className="fixed right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
           onClick={() => {
             setCommentModalView('write');
             setIsCommentModalOpen(true);
           }}
         >
-          <Image src={heartIconSrc} alt="" width={36} height={36} unoptimized />
+          <span className="relative block size-[26px]">
+            <Image src="/img/step3/bell.svg" alt="" width={26} height={26} />
+            {hasComments && (
+              <Image
+                src="/img/step3/bell-dot.svg"
+                alt=""
+                width={4}
+                height={4}
+                className="absolute -top-0.5 right-0.5"
+              />
+            )}
+          </span>
         </button>
       )}
 
