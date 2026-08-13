@@ -172,12 +172,13 @@ describe('ResultReveal', () => {
     clickSpy.mockRestore();
   });
 
-  it('eventId가 없으면 하트 아이콘(덕담 남기기 버튼)이 렌더링되지 않는다', () => {
+  it('eventId가 없으면 하트/벨 아이콘(덕담 남기기, 댓글보기 버튼)이 렌더링되지 않는다', () => {
     seedResultState('son');
     mockCanvasSuccess();
     renderResultReveal();
 
     expect(screen.queryByRole('button', { name: '덕담 남기기' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '댓글보기' })).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -192,13 +193,25 @@ describe('ResultReveal', () => {
     expect(screen.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
   });
 
+  it('벨 아이콘 클릭 시 목록 뷰로 CommentModal이 열린다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await user.click(await screen.findByRole('button', { name: '댓글보기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
+  });
+
   it('댓글이 없으면 알림 dot이 노출되지 않는다', async () => {
     seedResultState('son');
     mockCanvasSuccess();
     listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
     renderResultReveal({ eventId: 'event-1' });
 
-    const bellButton = await screen.findByRole('button', { name: '덕담 남기기' });
+    const bellButton = await screen.findByRole('button', { name: '댓글보기' });
 
     expect(bellButton.querySelector('img[src*="bell.svg"]')).toBeInTheDocument();
     await waitFor(() => expect(listEventCommentsMock).toHaveBeenCalledWith('event-1'));
@@ -216,7 +229,7 @@ describe('ResultReveal', () => {
       });
       renderResultReveal({ eventId: 'event-1' });
 
-      const bellButton = await screen.findByRole('button', { name: '덕담 남기기' });
+      const bellButton = await screen.findByRole('button', { name: '댓글보기' });
 
       expect(bellButton.querySelector('img[src*="bell.svg"]')).toBeInTheDocument();
       await waitFor(() => expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).toBeInTheDocument());

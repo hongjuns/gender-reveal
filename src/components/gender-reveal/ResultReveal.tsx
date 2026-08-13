@@ -185,10 +185,10 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
       {eventId && (
         <button
           type="button"
-          aria-label="덕담 남기기"
+          aria-label="댓글보기"
           className="fixed right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
           onClick={() => {
-            setCommentModalView('write');
+            setCommentModalView('list');
             setIsCommentModalOpen(true);
           }}
         >
@@ -216,15 +216,55 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           <span className={pointColorClassName}>{`'${genderLabel}'이에요!`}</span>
         </p>
 
-        <Image
-          src={bubbleSrc}
-          alt=""
-          width={931}
-          height={771}
-          aria-hidden="true"
-          unoptimized
-          className={`mt-6 h-auto w-[min(70px,18vw)] ${isPreparing ? '' : 'animate-float'}`}
-        />
+        <div className="relative mt-6 w-[min(70px,18vw)]">
+          {eventId ? (
+            <button
+              type="button"
+              aria-label="덕담 남기기"
+              className="block w-full cursor-pointer border-0 bg-transparent p-0"
+              onClick={() => {
+                setCommentModalView('write');
+                setIsCommentModalOpen(true);
+              }}
+            >
+              <Image
+                src={bubbleSrc}
+                alt=""
+                width={931}
+                height={771}
+                unoptimized
+                className={`h-auto w-full ${isPreparing ? '' : 'animate-float'}`}
+              />
+            </button>
+          ) : (
+            <Image
+              src={bubbleSrc}
+              alt=""
+              width={931}
+              height={771}
+              aria-hidden="true"
+              unoptimized
+              className={`h-auto w-full ${isPreparing ? '' : 'animate-float'}`}
+            />
+          )}
+
+          {eventId && (
+            <div
+              data-html2canvas-ignore="true"
+              aria-hidden="true"
+              className={`pointer-events-none absolute left-[61%] top-[32%] flex h-[94%] w-[78%] items-center justify-center ${isPreparing ? '' : 'animate-float'}`}
+            >
+              <Image
+                src="/img/step3/finger.png"
+                alt=""
+                width={178}
+                height={278}
+                unoptimized
+                className="h-auto w-[56%] rotate-[-46deg]"
+              />
+            </div>
+          )}
+        </div>
 
         <Image
           src={imageSrc}
@@ -289,7 +329,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           onClose={() => setIsCommentModalOpen(false)}
         >
           {commentModalView === 'write' ? (
-            <CommentWriteView eventId={eventId} onViewList={() => setCommentModalView('list')} />
+            <CommentWriteView eventId={eventId} babyNickname={babyNickname} />
           ) : (
             <CommentCarousel
               eventId={eventId}

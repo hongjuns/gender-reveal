@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type TouchEvent } from 'react';
+import { useRef, useState, type PointerEvent } from 'react';
 import Image from 'next/image';
 import { useEventComments } from '@/hooks/useEventComments';
 import { CommentEmptyState } from './CommentEmptyState';
@@ -16,7 +16,7 @@ interface CommentCarouselProps {
 export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentCarouselProps) {
   const { data, isPending } = useEventComments(eventId);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const touchStartX = useRef<number | null>(null);
+  const pointerStartX = useRef<number | null>(null);
 
   if (isPending) {
     return (
@@ -38,16 +38,16 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
     setCurrentIndex(Math.max(0, Math.min(index, comments.length - 1)));
   }
 
-  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
-    touchStartX.current = event.touches[0].clientX;
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    pointerStartX.current = event.clientX;
   }
 
-  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
-    if (touchStartX.current === null) {
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (pointerStartX.current === null) {
       return;
     }
-    const deltaX = event.changedTouches[0].clientX - touchStartX.current;
-    touchStartX.current = null;
+    const deltaX = event.clientX - pointerStartX.current;
+    pointerStartX.current = null;
 
     if (deltaX <= -SWIPE_THRESHOLD_PX) {
       goToIndex(activeIndex + 1);
@@ -64,24 +64,27 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
         온 걸 환영한다!
       </p>
 
-      <Image
-        src="/img/comments/heart-hands.png"
-        alt=""
-        width={189}
-        height={126}
-        unoptimized
-        className="mt-6 h-auto w-[189px]"
-      />
-
       <div
-        className="mt-6 flex min-h-[90px] w-full flex-col items-center justify-center gap-3"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        className="flex w-full touch-pan-y select-none flex-col items-center"
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
       >
-        <p className="m-0 whitespace-pre-line text-center font-pixel text-sm leading-[18px] text-ink-muted">
-          {current.content}
-        </p>
-        <p className="m-0 text-center font-pixel text-base text-ink">{`From. ${current.senderName}`}</p>
+        <Image
+          src="/img/comments/heart-hands.png"
+          alt=""
+          width={189}
+          height={126}
+          unoptimized
+          draggable={false}
+          className="mt-6 h-auto w-[189px]"
+        />
+
+        <div className="mt-6 flex min-h-[90px] w-full flex-col items-center justify-center gap-3">
+          <p className="m-0 whitespace-pre-line text-center font-pixel text-sm leading-[18px] text-ink-muted">
+            {current.content}
+          </p>
+          <p className="m-0 text-center font-pixel text-base text-ink">{`From. ${current.senderName}`}</p>
+        </div>
       </div>
 
       <div className="mt-4 flex items-center gap-1.5">

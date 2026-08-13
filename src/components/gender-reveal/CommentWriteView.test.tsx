@@ -27,7 +27,7 @@ beforeEach(() => {
 describe('CommentWriteView', () => {
   it('content가 100자를 초과해 입력되면 100자로 잘리고 카운터가 100/100자로 고정된다', async () => {
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     const textarea = screen.getByPlaceholderText(/곧 만날 아기에게/);
     await user.click(textarea);
@@ -39,7 +39,7 @@ describe('CommentWriteView', () => {
 
   it('프리셋 칩 클릭 시 문구가 textarea에 삽입된다', async () => {
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     await user.click(screen.getByRole('button', { name: '#건강하게 자라렴❤️' }));
 
@@ -49,13 +49,13 @@ describe('CommentWriteView', () => {
 
   it('칩 삽입 시 100자를 넘기면 삽입하지 않고 안내 문구를 보여준다', async () => {
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     const textarea = screen.getByPlaceholderText(/곧 만날 아기에게/);
     await user.click(textarea);
     await user.paste('가'.repeat(95));
 
-    await user.click(screen.getByRole('button', { name: '#행복하길 바라' }));
+    await user.click(screen.getByRole('button', { name: '#너의모든날이빛나길✨' }));
 
     expect(textarea).toHaveValue('가'.repeat(95));
     expect(screen.getByText(/100자를 초과/)).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe('CommentWriteView', () => {
 
   it('이름 또는 내용이 비어 있으면 완료하기 버튼이 비활성화된다', async () => {
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     expect(screen.getByRole('button', { name: '완료하기' })).toBeDisabled();
 
@@ -82,7 +82,7 @@ describe('CommentWriteView', () => {
       comment: { id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' },
     });
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     await user.click(screen.getByPlaceholderText(/곧 만날 아기에게/));
     await user.paste('  축하해요  ');
@@ -103,7 +103,7 @@ describe('CommentWriteView', () => {
   ])('제출 결과가 %s이면 입력 폼 대신 안내 문구가 표시된다', async (_label, result, expectedText) => {
     createEventCommentMock.mockResolvedValue(result);
     const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={jest.fn()} />);
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
     await user.click(screen.getByPlaceholderText(/곧 만날 아기에게/));
     await user.paste('축하해요');
@@ -116,13 +116,11 @@ describe('CommentWriteView', () => {
     expect(screen.queryByPlaceholderText('보내는 사람')).not.toBeInTheDocument();
   });
 
-  it('댓글보기 클릭 시 onViewList 콜백을 호출한다', async () => {
-    const onViewList = jest.fn();
-    const user = userEvent.setup();
-    renderWithClient(<CommentWriteView eventId="event-1" onViewList={onViewList} />);
+  it('babyNickname을 포함한 안내 문구를 보여준다', () => {
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
-    await user.click(screen.getByRole('button', { name: '댓글보기' }));
-
-    expect(onViewList).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByText((_, element) => element?.textContent === '콩이에게덕담 한마디'),
+    ).toBeInTheDocument();
   });
 });

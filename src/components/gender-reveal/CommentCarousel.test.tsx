@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { CommentCarousel } from './CommentCarousel';
@@ -16,6 +16,14 @@ function renderWithClient(ui: ReactNode) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
+
+// jsdom has no PointerEvent constructor, so fireEvent.pointerDown/Up would silently
+// drop clientX. Dispatch a plain Event with clientX attached instead.
+function firePointerEvent(element: HTMLElement, type: 'pointerdown' | 'pointerup', clientX: number) {
+  const event = new Event(type, { bubbles: true });
+  Object.defineProperty(event, 'clientX', { value: clientX });
+  fireEvent(element, event);
 }
 
 const comments = [
@@ -50,6 +58,28 @@ describe('CommentCarousel', () => {
 
     expect(screen.getByText('축하합니다')).toBeInTheDocument();
     expect(screen.getByText('From. 민수')).toBeInTheDocument();
+  });
+
+  it('이미지 영역을 좌우로 스와이프하면 댓글이 전환된다', async () => {
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments });
+    renderWithClient(
+      <CommentCarousel eventId="event-1" babyNickname="콩이" onViewWrite={jest.fn()} />,
+    );
+
+    const image = await screen.findByAltText('');
+    const swipeArea = image.parentElement as HTMLElement;
+
+    firePointerEvent(swipeArea, 'pointerdown', 200);
+    firePointerEvent(swipeArea, 'pointerup', 120);
+
+    expect(screen.getByText('축하합니다')).toBeInTheDocument();
+    expect(screen.getByText('From. 민수')).toBeInTheDocument();
+
+    firePointerEvent(swipeArea, 'pointerdown', 120);
+    firePointerEvent(swipeArea, 'pointerup', 200);
+
+    expect(screen.getByText('축하해요')).toBeInTheDocument();
+    expect(screen.getByText('From. 지민')).toBeInTheDocument();
   });
 
   it('덕담 남기기 클릭 시 onViewWrite를 호출한다', async () => {

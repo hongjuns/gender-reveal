@@ -9,7 +9,7 @@ const meta: Meta<typeof CommentWriteView> = {
   parameters: { layout: 'centered' },
   args: {
     eventId: '8f14e45f-ceea-467e-8f14-e45fceea467e',
-    onViewList: () => {},
+    babyNickname: '콩이',
   },
   decorators: [
     (Story) => {

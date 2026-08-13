@@ -6,14 +6,14 @@ import { useCreateEventComment } from '@/hooks/useCreateEventComment';
 const CONTENT_MAX_LENGTH = 100;
 const SENDER_NAME_MAX_LENGTH = 20;
 
-const PRESET_TAGS = ['#건강하게 자라렴❤️', '#행복하길 바라', '#세상에 와줘서 고마워!'];
+const PRESET_TAGS = ['#건강하게 자라렴❤️', '#너의모든날이빛나길✨', '#세상에 와줘서 고마워!'];
 
 interface CommentWriteViewProps {
   eventId: string;
-  onViewList: () => void;
+  babyNickname: string;
 }
 
-export function CommentWriteView({ eventId, onViewList }: CommentWriteViewProps) {
+export function CommentWriteView({ eventId, babyNickname }: CommentWriteViewProps) {
   const [content, setContent] = useState('');
   const [senderName, setSenderName] = useState('');
   const [chipError, setChipError] = useState<string | null>(null);
@@ -69,13 +69,13 @@ export function CommentWriteView({ eventId, onViewList }: CommentWriteViewProps)
   return (
     <div className="flex w-full flex-col items-center">
       <p className="m-0 text-center font-pixel text-xl leading-6 text-ink">
-        아기에게
+        {babyNickname}에게
         <br />
         덕담 한마디
       </p>
 
       <p className="mt-4 w-full font-pixel text-sm leading-[18px] text-ink-muted">
-        곧 만날 아기에게 해주고 싶은 말을 적어주세요 :)
+        곧 만날 아기에게 해주고 싶은 말을 적어주세요
       </p>
 
       <div className="mt-2 w-full">
@@ -86,14 +86,7 @@ export function CommentWriteView({ eventId, onViewList }: CommentWriteViewProps)
           placeholder="곧 만날 아기에게 해주고 싶은 말을 적어주세요 :)"
           className="h-[132px] w-full resize-none rounded border border-[#cdcdcd] p-3 font-pixel text-sm text-ink outline-none"
         />
-        <div className="mt-1 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onViewList}
-            className="cursor-pointer border-0 bg-transparent p-0 font-pixel text-sm text-ink-muted underline decoration-1 underline-offset-4"
-          >
-            댓글보기
-          </button>
+        <div className="mt-1 flex items-center justify-end">
           <span className="font-pixel text-sm text-ink-muted">
             {content.length}/{CONTENT_MAX_LENGTH}자
           </span>
