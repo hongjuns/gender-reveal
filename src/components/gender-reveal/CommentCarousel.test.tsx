@@ -66,7 +66,7 @@ describe('CommentCarousel', () => {
       <CommentCarousel eventId="event-1" babyNickname="콩이" onViewWrite={jest.fn()} />,
     );
 
-    const image = await screen.findByAltText('');
+    const image = await screen.findByTestId('carousel-illustration');
     const swipeArea = image.parentElement as HTMLElement;
 
     firePointerEvent(swipeArea, 'pointerdown', 200);
@@ -80,6 +80,37 @@ describe('CommentCarousel', () => {
 
     expect(screen.getByText('축하해요')).toBeInTheDocument();
     expect(screen.getByText('From. 지민')).toBeInTheDocument();
+  });
+
+  it('다음/이전 슬라이드 버튼 클릭으로 댓글이 전환되고 삽화 이미지가 바뀐다', async () => {
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments });
+    const user = userEvent.setup();
+    renderWithClient(<CommentCarousel eventId="event-1" babyNickname="콩이" onViewWrite={jest.fn()} />);
+
+    await screen.findByText('축하해요');
+    const beforeSrc = screen.getByTestId('carousel-illustration').getAttribute('src');
+
+    await user.click(screen.getByRole('button', { name: '다음 댓글' }));
+
+    expect(screen.getByText('축하합니다')).toBeInTheDocument();
+    const afterNextSrc = screen.getByTestId('carousel-illustration').getAttribute('src');
+    expect(afterNextSrc).not.toBe(beforeSrc);
+
+    await user.click(screen.getByRole('button', { name: '이전 댓글' }));
+
+    expect(screen.getByText('축하해요')).toBeInTheDocument();
+    const afterPrevSrc = screen.getByTestId('carousel-illustration').getAttribute('src');
+    expect(afterPrevSrc).not.toBe(afterNextSrc);
+  });
+
+  it('댓글이 1개면 슬라이드 버튼이 렌더링되지 않는다', async () => {
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [comments[0]] });
+    renderWithClient(<CommentCarousel eventId="event-1" babyNickname="콩이" onViewWrite={jest.fn()} />);
+
+    await screen.findByText('축하해요');
+
+    expect(screen.queryByRole('button', { name: '다음 댓글' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '이전 댓글' })).not.toBeInTheDocument();
   });
 
   it('덕담 남기기 클릭 시 onViewWrite를 호출한다', async () => {

@@ -11,9 +11,10 @@ const PRESET_TAGS = ['#건강하게 자라렴❤️', '#너의모든날이빛나
 interface CommentWriteViewProps {
   eventId: string;
   babyNickname: string;
+  onSubmitted?: (senderName: string) => void;
 }
 
-export function CommentWriteView({ eventId, babyNickname }: CommentWriteViewProps) {
+export function CommentWriteView({ eventId, babyNickname, onSubmitted }: CommentWriteViewProps) {
   const [content, setContent] = useState('');
   const [senderName, setSenderName] = useState('');
   const [chipError, setChipError] = useState<string | null>(null);
@@ -45,13 +46,15 @@ export function CommentWriteView({ eventId, babyNickname }: CommentWriteViewProp
     if (!canSubmit) {
       return;
     }
+    const trimmedSenderName = senderName.trim();
     const result = await mutation.mutateAsync({
-      senderName: senderName.trim(),
+      senderName: trimmedSenderName,
       content: content.trim(),
     });
     if (result.status === 'ok') {
       setContent('');
       setSenderName('');
+      onSubmitted?.(trimmedSenderName);
     }
   }
 

@@ -7,6 +7,23 @@ import { CommentEmptyState } from './CommentEmptyState';
 
 const SWIPE_THRESHOLD_PX = 40;
 
+const RANDOM_ILLUSTRATIONS = [
+  { src: '/img/step3/random_1.png', width: 482, height: 536 },
+  { src: '/img/step3/random_2.png', width: 466, height: 445 },
+  { src: '/img/step3/random_3.png', width: 287, height: 415 },
+];
+
+function pickRandomIllustrationIndex(excludeIndex: number): number {
+  if (RANDOM_ILLUSTRATIONS.length <= 1) {
+    return 0;
+  }
+  let index = excludeIndex;
+  while (index === excludeIndex) {
+    index = Math.floor(Math.random() * RANDOM_ILLUSTRATIONS.length);
+  }
+  return index;
+}
+
 interface CommentCarouselProps {
   eventId: string;
   babyNickname: string;
@@ -16,6 +33,7 @@ interface CommentCarouselProps {
 export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentCarouselProps) {
   const { data, isPending } = useEventComments(eventId);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [illustrationIndex, setIllustrationIndex] = useState(0);
   const pointerStartX = useRef<number | null>(null);
 
   if (isPending) {
@@ -33,9 +51,16 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
   const comments = data.comments;
   const activeIndex = Math.min(currentIndex, comments.length - 1);
   const current = comments[activeIndex];
+  const illustration = RANDOM_ILLUSTRATIONS[illustrationIndex];
+  const canSlide = comments.length > 1;
 
   function goToIndex(index: number) {
-    setCurrentIndex(Math.max(0, Math.min(index, comments.length - 1)));
+    const clamped = Math.max(0, Math.min(index, comments.length - 1));
+    if (clamped === activeIndex) {
+      return;
+    }
+    setCurrentIndex(clamped);
+    setIllustrationIndex((prev) => pickRandomIllustrationIndex(prev));
   }
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
@@ -64,27 +89,53 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
         온 걸 환영한다!
       </p>
 
-      <div
-        className="flex w-full touch-pan-y select-none flex-col items-center"
-        onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-      >
-        <Image
-          src="/img/comments/heart-hands.png"
-          alt=""
-          width={189}
-          height={126}
-          unoptimized
-          draggable={false}
-          className="mt-6 h-auto w-[189px]"
-        />
+      <div className="relative w-full">
+        {canSlide && (
+          <button
+            type="button"
+            aria-label="이전 댓글"
+            onClick={() => goToIndex(activeIndex - 1)}
+            className="absolute left-0 top-1/2 z-10 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
+          >
+            <Image src="/img/comments/carousel-arrow.svg" alt="" width={15} height={8} className="rotate-90" />
+          </button>
+        )}
 
-        <div className="mt-6 flex min-h-[90px] w-full flex-col items-center justify-center gap-3">
-          <p className="m-0 whitespace-pre-line text-center font-pixel text-sm leading-[18px] text-ink-muted">
-            {current.content}
-          </p>
-          <p className="m-0 text-center font-pixel text-base text-ink">{`From. ${current.senderName}`}</p>
+        <div
+          className="flex w-full touch-pan-y select-none flex-col items-center px-8"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+        >
+          <Image
+            key={illustration.src}
+            data-testid="carousel-illustration"
+            src={illustration.src}
+            alt=""
+            width={illustration.width}
+            height={illustration.height}
+            unoptimized
+            draggable={false}
+            className="mt-6 h-[116px] w-auto animate-fadeIn object-contain"
+          />
+
+          <div className="mt-6 flex min-h-[90px] w-full flex-col items-center justify-center gap-3">
+            <p className="m-0 whitespace-pre-line text-center font-pixel text-sm leading-[18px] text-ink-muted">
+              {current.content}
+            </p>
+            <p className="m-0 text-center font-pixel text-base text-ink">{`From. ${current.senderName}`}</p>
+          </div>
         </div>
+
+        {canSlide && (
+          <button
+            type="button"
+            aria-label="다음 댓글"
+            onClick={() => goToIndex(activeIndex + 1)}
+            className="absolute right-0 top-1/2 z-10 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
+          >
+            <Image src="/img/comments/carousel-arrow.svg" alt="" width={15} height={8} className="-rotate-90" />
+          </button>
+        )}
       </div>
 
       <div className="mt-4 flex items-center gap-1.5">

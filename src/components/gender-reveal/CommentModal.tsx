@@ -5,10 +5,17 @@ import Image from 'next/image';
 
 interface CommentModalProps {
   isOpen: boolean;
-  view: 'write' | 'list';
+  view: 'invite' | 'write' | 'success' | 'list';
   onClose: () => void;
   children: ReactNode;
 }
+
+const VIEW_LABELS: Record<CommentModalProps['view'], string> = {
+  invite: '덕담 안내',
+  write: '덕담 작성',
+  success: '덕담 전달 완료',
+  list: '덕담 목록',
+};
 
 export function CommentModal({ isOpen, view, onClose, children }: CommentModalProps) {
   useEffect(() => {
@@ -36,7 +43,7 @@ export function CommentModal({ isOpen, view, onClose, children }: CommentModalPr
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={view === 'write' ? '덕담 작성' : '덕담 목록'}
+        aria-label={VIEW_LABELS[view]}
         className="relative flex w-[350px] max-w-full flex-col items-center rounded-[10px] bg-white px-5 pb-5 pt-[49px]"
         onClick={(event) => event.stopPropagation()}
       >

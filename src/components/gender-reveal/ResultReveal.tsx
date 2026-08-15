@@ -9,6 +9,8 @@ import { formatKstDate } from '@/lib/date';
 import { CommentModal } from './CommentModal';
 import { CommentWriteView } from './CommentWriteView';
 import { CommentCarousel } from './CommentCarousel';
+import { CommentInviteView } from './CommentInviteView';
+import { CommentSuccessView } from './CommentSuccessView';
 
 const SHARE_TIMEOUT_MS = 15000;
 const CAPTURE_TIMEOUT_MS = 12000;
@@ -59,7 +61,8 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
-  const [commentModalView, setCommentModalView] = useState<'write' | 'list'>('write');
+  const [commentModalView, setCommentModalView] = useState<'invite' | 'write' | 'success' | 'list'>('invite');
+  const [commentSenderName, setCommentSenderName] = useState('');
   const { data: commentsData } = useEventComments(eventId ?? '', Boolean(eventId));
   const hasComments = commentsData?.status === 'ok' && commentsData.comments.length > 0;
 
@@ -131,7 +134,6 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const isSon = babyGender === 'son';
   const genderLabel = isSon ? '아들' : '딸';
   const imageSrc = isSon ? '/img/step3/baby-son.png' : '/img/step3/baby-daughter.png';
-  const bubbleSrc = isSon ? '/img/step3/bubble-son.png' : '/img/step3/bubble-daughter.png';
   const imageAlt = isSon ? '남아 일러스트' : '여아 일러스트';
   const pointColorClassName = isSon ? 'text-boy-point' : 'text-girl-point';
   const dateText = formatKstDate(dueDate);
@@ -188,7 +190,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           aria-label="댓글보기"
           className="fixed right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
           onClick={() => {
-            setCommentModalView('list');
+            setCommentModalView(hasComments ? 'list' : 'invite');
             setIsCommentModalOpen(true);
           }}
         >
@@ -216,52 +218,43 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           <span className={pointColorClassName}>{`'${genderLabel}'이에요!`}</span>
         </p>
 
-        <div className="relative mt-6 w-[min(70px,18vw)]">
+        <div className="relative mt-6 w-[min(196px,50vw)]">
           {eventId ? (
             <button
               type="button"
               aria-label="덕담 남기기"
-              className="block w-full cursor-pointer border-0 bg-transparent p-0"
+              className="relative block w-full cursor-pointer border-0 bg-transparent p-0"
               onClick={() => {
-                setCommentModalView('write');
+                setCommentModalView(hasComments ? 'list' : 'invite');
                 setIsCommentModalOpen(true);
               }}
             >
               <Image
-                src={bubbleSrc}
+                src="/img/step3/comment-bubble.png"
                 alt=""
-                width={931}
-                height={771}
+                width={588}
+                height={219}
                 unoptimized
-                className={`h-auto w-full ${isPreparing ? '' : 'animate-float'}`}
+                className="h-auto w-full"
               />
+              <span className="pointer-events-none absolute left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                덕담 한마디 남겨 주세요♥
+              </span>
             </button>
           ) : (
-            <Image
-              src={bubbleSrc}
-              alt=""
-              width={931}
-              height={771}
-              aria-hidden="true"
-              unoptimized
-              className={`h-auto w-full ${isPreparing ? '' : 'animate-float'}`}
-            />
-          )}
-
-          {eventId && (
-            <div
-              data-html2canvas-ignore="true"
-              aria-hidden="true"
-              className={`pointer-events-none absolute left-[61%] top-[32%] flex h-[94%] w-[78%] items-center justify-center ${isPreparing ? '' : 'animate-float'}`}
-            >
+            <div className="relative">
               <Image
-                src="/img/step3/finger.png"
+                src="/img/step3/comment-bubble.png"
                 alt=""
-                width={178}
-                height={278}
+                width={588}
+                height={219}
+                aria-hidden="true"
                 unoptimized
-                className="h-auto w-[56%] rotate-[-46deg]"
+                className="h-auto w-full"
               />
+              <span className="pointer-events-none absolute left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                덕담 한마디 남겨 주세요♥
+              </span>
             </div>
           )}
         </div>
@@ -328,8 +321,23 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           view={commentModalView}
           onClose={() => setIsCommentModalOpen(false)}
         >
-          {commentModalView === 'write' ? (
-            <CommentWriteView eventId={eventId} babyNickname={babyNickname} />
+          {commentModalView === 'invite' ? (
+            <CommentInviteView babyNickname={babyNickname} onWriteClick={() => setCommentModalView('write')} />
+          ) : commentModalView === 'write' ? (
+            <CommentWriteView
+              eventId={eventId}
+              babyNickname={babyNickname}
+              onSubmitted={(senderName) => {
+                setCommentSenderName(senderName);
+                setCommentModalView('success');
+              }}
+            />
+          ) : commentModalView === 'success' ? (
+            <CommentSuccessView
+              babyNickname={babyNickname}
+              senderName={commentSenderName}
+              onViewComments={() => setCommentModalView('list')}
+            />
           ) : (
             <CommentCarousel
               eventId={eventId}

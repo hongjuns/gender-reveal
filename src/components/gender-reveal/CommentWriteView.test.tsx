@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { CommentWriteView } from './CommentWriteView';
@@ -95,6 +95,24 @@ describe('CommentWriteView', () => {
       senderName: '지민',
       content: '축하해요',
     });
+  });
+
+  it('완료하기 클릭 시 성공하면 trim된 이름으로 onSubmitted를 호출한다', async () => {
+    createEventCommentMock.mockResolvedValue({
+      status: 'ok',
+      comment: { id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' },
+    });
+    const onSubmitted = jest.fn();
+    const user = userEvent.setup();
+    renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" onSubmitted={onSubmitted} />);
+
+    await user.click(screen.getByPlaceholderText(/곧 만날 아기에게/));
+    await user.paste('축하해요');
+    await user.click(screen.getByPlaceholderText('보내는 사람'));
+    await user.paste('  지민  ');
+    await user.click(screen.getByRole('button', { name: '완료하기' }));
+
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledWith('지민'));
   });
 
   it.each([

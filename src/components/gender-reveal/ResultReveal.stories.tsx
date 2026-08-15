@@ -59,7 +59,7 @@ export const DaughterResult: Story = {
 };
 
 export const WithCommentModal: Story = {
-  name: '댓글 모달 오픈',
+  name: '댓글 모달 오픈 (댓글 0건 - 안내 → 작성)',
   args: {
     eventId: '8f14e45f-ceea-467e-8f14-e45fceea467e',
   },
@@ -70,6 +70,9 @@ export const WithCommentModal: Story = {
 
     const heartButton = await canvas.findByRole('button', { name: '덕담 남기기' });
     await user.click(heartButton);
+
+    const dialog = await canvas.findByRole('dialog', { name: '덕담 안내' });
+    await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));
 
     await expect(canvas.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
   },

@@ -52,5 +52,19 @@ describe('CommentModal', () => {
       </CommentModal>,
     );
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', '덕담 목록');
+
+    rerender(
+      <CommentModal isOpen view="invite" onClose={jest.fn()}>
+        <p>안내</p>
+      </CommentModal>,
+    );
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', '덕담 안내');
+
+    rerender(
+      <CommentModal isOpen view="success" onClose={jest.fn()}>
+        <p>완료</p>
+      </CommentModal>,
+    );
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', '덕담 전달 완료');
   });
 });
