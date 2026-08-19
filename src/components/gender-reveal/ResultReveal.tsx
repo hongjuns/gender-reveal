@@ -58,6 +58,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const captureRef = useRef<HTMLDivElement>(null);
   const [preparedImage, setPreparedImage] = useState<PreparedImage | null>(null);
   const [isPreparing, setIsPreparing] = useState(true);
+  const [isCapturingSnapshot, setIsCapturingSnapshot] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
@@ -76,6 +77,23 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
     setSaveError(null);
     try {
       await waitForImagesToLoad(captureRef.current);
+      if (document.fonts?.ready) {
+        // Without this, html2canvas can capture before the custom pixel font
+        // finishes loading (font-display: swap renders a fallback font first),
+        // which has different line-height metrics and throws off text positioning.
+        await document.fonts.ready;
+      }
+
+      // The comment bubble's "덕담 한마디..." text is only ever rasterized by
+      // html2canvas correctly by accident — any text baked into the captured
+      // canvas is at the mercy of its re-layout. So for the capture itself, swap
+      // the bubble out for a plain heart icon (see render below) with no text to
+      // mis-position, and swap back once the capture is done. The wait below
+      // just lets that swap actually commit to the DOM before html2canvas reads
+      // it; html2canvas's own imageTimeout covers the heart icon's own load.
+      setIsCapturingSnapshot(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
       const canvas = await raceWithTimeout(
         html2canvas(captureRef.current as HTMLElement, {
           scale: 2,
@@ -105,6 +123,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
       setSaveError(message);
     } finally {
       if (!isCancelled()) {
+        setIsCapturingSnapshot(false);
         setIsPreparing(false);
       }
     }
@@ -140,6 +159,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const imageDimensions = isSon
     ? { width: 243, height: 335, sizeClassName: 'w-[min(168px,43vw)]' }
     : { width: 298, height: 347, sizeClassName: 'w-[min(200px,51vw)]' };
+  const heartIconSrc = isSon ? '/img/step2/heart-blue.png' : '/img/step2/heart-pink.png';
 
   async function handleSaveResult() {
     if (isPreparing || isSaving) {
@@ -184,31 +204,6 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
 
   return (
     <section className="relative flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
-      {eventId && (
-        <button
-          type="button"
-          aria-label="댓글보기"
-          className="fixed right-4 top-4 z-10 flex size-9 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
-          onClick={() => {
-            setCommentModalView(hasComments ? 'list' : 'invite');
-            setIsCommentModalOpen(true);
-          }}
-        >
-          <span className="relative block size-[26px]">
-            <Image src="/img/step3/bell.svg" alt="" width={26} height={26} />
-            {hasComments && (
-              <Image
-                src="/img/step3/bell-dot.svg"
-                alt=""
-                width={4}
-                height={4}
-                className="absolute -top-0.5 right-0.5"
-              />
-            )}
-          </span>
-        </button>
-      )}
-
       <div ref={captureRef} className="flex w-full flex-col items-center bg-white p-6">
         <p
           data-testid="result-message"
@@ -218,12 +213,31 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           <span className={pointColorClassName}>{`'${genderLabel}'이에요!`}</span>
         </p>
 
-        <div className="relative mt-6 w-[min(196px,50vw)]">
-          {eventId ? (
+        <div
+          className={`relative mt-6 flex w-full justify-center ${isPreparing ? '' : 'animate-float'}`}
+          style={{ animationDelay: '0.3s' }}
+        >
+          {isCapturingSnapshot ? (
+            // Captured/saved images should never bake in the "덕담 한마디..." text —
+            // rendering it via an absolutely-positioned overlay makes it a moving
+            // target for html2canvas's re-layout. A plain heart icon (like the
+            // pre-redesign UI) has nothing to mis-position. This only swaps in for
+            // the brief html2canvas call itself (see prepareImage) — the button
+            // stays interactive at all other times, independent of image prep.
+            <Image
+              src={heartIconSrc}
+              alt=""
+              width={141}
+              height={126}
+              aria-hidden="true"
+              unoptimized
+              className="h-auto w-[min(70px,18vw)]"
+            />
+          ) : eventId ? (
             <button
               type="button"
               aria-label="덕담 남기기"
-              className="relative block w-full cursor-pointer border-0 bg-transparent p-0"
+              className="relative block w-[min(196px,50vw)] cursor-pointer border-0 bg-transparent p-0"
               onClick={() => {
                 setCommentModalView(hasComments ? 'list' : 'invite');
                 setIsCommentModalOpen(true);
@@ -237,12 +251,14 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
                 unoptimized
                 className="h-auto w-full"
               />
-              <span className="pointer-events-none absolute left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
-                덕담 한마디 남겨 주세요♥
-              </span>
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[63%] items-center justify-center">
+                <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                  덕담 한마디 남겨 주세요♥
+                </span>
+              </div>
             </button>
           ) : (
-            <div className="relative">
+            <div className="relative w-[min(196px,50vw)]">
               <Image
                 src="/img/step3/comment-bubble.png"
                 alt=""
@@ -252,9 +268,11 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
                 unoptimized
                 className="h-auto w-full"
               />
-              <span className="pointer-events-none absolute left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
-                덕담 한마디 남겨 주세요♥
-              </span>
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[63%] items-center justify-center">
+                <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                  덕담 한마디 남겨 주세요♥
+                </span>
+              </div>
             </div>
           )}
         </div>

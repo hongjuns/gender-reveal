@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import html2canvas from 'html2canvas';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -174,13 +174,12 @@ describe('ResultReveal', () => {
     clickSpy.mockRestore();
   });
 
-  it('eventId가 없으면 하트/벨 아이콘(덕담 남기기, 댓글보기 버튼)이 렌더링되지 않는다', () => {
+  it('eventId가 없으면 하트 아이콘(덕담 남기기 버튼)이 렌더링되지 않는다', () => {
     seedResultState('son');
     mockCanvasSuccess();
     renderResultReveal();
 
     expect(screen.queryByRole('button', { name: '덕담 남기기' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '댓글보기' })).not.toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -249,39 +248,7 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    const bellButton = await screen.findByRole('button', { name: '댓글보기' });
-    await waitFor(() => expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).toBeInTheDocument());
-
-    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
-
-    expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
-  });
-
-  it('댓글이 0건이면 벨 아이콘 클릭 시 안내 뷰로 CommentModal이 열린다', async () => {
-    seedResultState('son');
-    mockCanvasSuccess();
-    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
-    const user = userEvent.setup();
-    renderResultReveal({ eventId: 'event-1' });
-
-    await user.click(await screen.findByRole('button', { name: '댓글보기' }));
-
-    expect(screen.getByRole('dialog', { name: '덕담 안내' })).toBeInTheDocument();
-  });
-
-  it('댓글이 1건 이상이면 벨 아이콘 클릭 시 목록 뷰로 CommentModal이 열린다', async () => {
-    seedResultState('son');
-    mockCanvasSuccess();
-    listEventCommentsMock.mockResolvedValue({
-      status: 'ok',
-      comments: [{ id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' }],
-    });
-    const user = userEvent.setup();
-    renderResultReveal({ eventId: 'event-1' });
-
-    const bellButton = await screen.findByRole('button', { name: '댓글보기' });
-    await waitFor(() => expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).toBeInTheDocument());
-    await user.click(bellButton);
+    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
 
     expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
   });
@@ -296,46 +263,13 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    const bellButton = await screen.findByRole('button', { name: '댓글보기' });
-    await waitFor(() => expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).toBeInTheDocument());
-    await user.click(bellButton);
+    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
 
     const dialog = screen.getByRole('dialog', { name: '덕담 목록' });
     await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));
 
     expect(screen.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
   });
-
-  it('댓글이 없으면 알림 dot이 노출되지 않는다', async () => {
-    seedResultState('son');
-    mockCanvasSuccess();
-    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
-    renderResultReveal({ eventId: 'event-1' });
-
-    const bellButton = await screen.findByRole('button', { name: '댓글보기' });
-
-    expect(bellButton.querySelector('img[src*="bell.svg"]')).toBeInTheDocument();
-    await waitFor(() => expect(listEventCommentsMock).toHaveBeenCalledWith('event-1'));
-    expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).not.toBeInTheDocument();
-  });
-
-  it.each(['son', 'daughter'] as const)(
-    '댓글이 있으면 성별(%s)에 상관없이 벨 아이콘에 알림 dot이 노출된다',
-    async (babyGender) => {
-      seedResultState(babyGender);
-      mockCanvasSuccess();
-      listEventCommentsMock.mockResolvedValue({
-        status: 'ok',
-        comments: [{ id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' }],
-      });
-      renderResultReveal({ eventId: 'event-1' });
-
-      const bellButton = await screen.findByRole('button', { name: '댓글보기' });
-
-      expect(bellButton.querySelector('img[src*="bell.svg"]')).toBeInTheDocument();
-      await waitFor(() => expect(bellButton.querySelector('img[src*="bell-dot.svg"]')).toBeInTheDocument());
-    },
-  );
 
   it("'결과 저장하기' 클릭 시 공유 API를 지원하면(iOS 등) 다운로드 대신 공유 시트를 띄운다", async () => {
     seedResultState('son');
