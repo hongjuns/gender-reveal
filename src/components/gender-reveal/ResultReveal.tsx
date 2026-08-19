@@ -251,7 +251,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
                 unoptimized
                 className="h-auto w-full"
               />
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[63%] items-center justify-center">
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
                 <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
                   덕담 한마디 남겨 주세요♥
                 </span>
