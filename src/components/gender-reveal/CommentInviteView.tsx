@@ -13,7 +13,7 @@ export function CommentInviteView({ babyNickname, onWriteClick }: CommentInviteV
       <p className="m-0 text-center font-pixel text-xl leading-6 text-ink">
         아직 도착한
         <br />
-        덕담이 없어요ㅠㅠ
+        덕담이 없어요
       </p>
 
       <Image

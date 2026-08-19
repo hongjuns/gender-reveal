@@ -7,7 +7,7 @@ describe('CommentInviteView', () => {
     render(<CommentInviteView babyNickname="콩이" onWriteClick={jest.fn()} />);
 
     expect(screen.getByText(/아직 도착한/)).toBeInTheDocument();
-    expect(screen.getByText(/덕담이 없어요ㅠㅠ/)).toBeInTheDocument();
+    expect(screen.getByText(/덕담이 없어요/)).toBeInTheDocument();
     expect(screen.getByText(/콩이를 기다리는 마음을/)).toBeInTheDocument();
   });
 

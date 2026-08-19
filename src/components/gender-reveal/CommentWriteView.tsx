@@ -6,7 +6,7 @@ import { useCreateEventComment } from '@/hooks/useCreateEventComment';
 const CONTENT_MAX_LENGTH = 100;
 const SENDER_NAME_MAX_LENGTH = 20;
 
-const PRESET_TAGS = ['#건강하게 자라렴❤️', '#너의모든날이빛나길✨', '#세상에 와줘서 고마워!'];
+const PRESET_TAGS = ['건강하게 자라렴❤️', '너의 모든 날이 빛나길✨', '세상에 와줘서 고마워!'];
 
 interface CommentWriteViewProps {
   eventId: string;
@@ -75,10 +75,6 @@ export function CommentWriteView({ eventId, babyNickname, onSubmitted }: Comment
         {babyNickname}에게
         <br />
         덕담 한마디
-      </p>
-
-      <p className="mt-4 w-full font-pixel text-sm leading-[18px] text-ink-muted">
-        곧 만날 아기에게 해주고 싶은 말을 적어주세요
       </p>
 
       <div className="mt-2 w-full">

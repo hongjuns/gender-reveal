@@ -41,10 +41,10 @@ describe('CommentWriteView', () => {
     const user = userEvent.setup();
     renderWithClient(<CommentWriteView eventId="event-1" babyNickname="콩이" />);
 
-    await user.click(screen.getByRole('button', { name: '#건강하게 자라렴❤️' }));
+    await user.click(screen.getByRole('button', { name: '건강하게 자라렴❤️' }));
 
     const textarea = screen.getByPlaceholderText(/곧 만날 아기에게/);
-    expect(textarea).toHaveValue('#건강하게 자라렴❤️');
+    expect(textarea).toHaveValue('건강하게 자라렴❤️');
   });
 
   it('칩 삽입 시 100자를 넘기면 삽입하지 않고 안내 문구를 보여준다', async () => {
@@ -55,7 +55,7 @@ describe('CommentWriteView', () => {
     await user.click(textarea);
     await user.paste('가'.repeat(95));
 
-    await user.click(screen.getByRole('button', { name: '#너의모든날이빛나길✨' }));
+    await user.click(screen.getByRole('button', { name: '너의 모든 날이 빛나길✨' }));
 
     expect(textarea).toHaveValue('가'.repeat(95));
     expect(screen.getByText(/100자를 초과/)).toBeInTheDocument();

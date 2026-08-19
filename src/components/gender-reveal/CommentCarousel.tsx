@@ -84,9 +84,9 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
   return (
     <div className="flex w-full flex-col items-center">
       <p className="m-0 text-center font-pixel text-xl leading-6 text-ink">
-        {babyNickname}아 세상에
+        {babyNickname}에게 
         <br />
-        온 걸 환영한다!
+        도착한 마음
       </p>
 
       <div className="relative w-full">
