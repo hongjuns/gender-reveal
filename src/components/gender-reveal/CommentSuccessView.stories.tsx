@@ -8,6 +8,7 @@ const meta: Meta<typeof CommentSuccessView> = {
   args: {
     babyNickname: '콩이',
     senderName: '지민',
+    isSon: true,
     onViewComments: () => {},
   },
   decorators: [
@@ -24,5 +25,12 @@ export default meta;
 type Story = StoryObj<typeof CommentSuccessView>;
 
 export const Default: Story = {
-  name: '기본',
+  name: '기본 (아들)',
+};
+
+export const Daughter: Story = {
+  name: '딸',
+  args: {
+    isSon: false,
+  },
 };

@@ -383,6 +383,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
             <CommentSuccessView
               babyNickname={babyNickname}
               senderName={commentSenderName}
+              isSon={isSon}
               onViewComments={() => setCommentModalView('list')}
             />
           ) : (

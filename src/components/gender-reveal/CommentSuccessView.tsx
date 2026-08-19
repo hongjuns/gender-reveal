@@ -5,10 +5,15 @@ import Image from 'next/image';
 interface CommentSuccessViewProps {
   babyNickname: string;
   senderName: string;
+  isSon: boolean;
   onViewComments: () => void;
 }
 
-export function CommentSuccessView({ babyNickname, senderName, onViewComments }: CommentSuccessViewProps) {
+export function CommentSuccessView({ babyNickname, senderName, isSon, onViewComments }: CommentSuccessViewProps) {
+  const babyImageSrc = isSon
+    ? '/img/comments/comment-success-baby.png'
+    : '/img/comments/comment-success-baby2.png';
+
   return (
     <div className="flex w-full flex-col items-center">
       <p className="m-0 text-center font-pixel text-xl leading-6 text-ink">
@@ -18,7 +23,7 @@ export function CommentSuccessView({ babyNickname, senderName, onViewComments }:
       </p>
 
       <Image
-        src="/img/comments/comment-success-baby.png"
+        src={babyImageSrc}
         alt=""
         width={435}
         height={552}
