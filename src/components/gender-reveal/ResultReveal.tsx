@@ -56,9 +56,10 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const handleCreateNew = onCreateNew ?? resetAll;
 
   const captureRef = useRef<HTMLDivElement>(null);
+  const heartIconRef = useRef<HTMLImageElement>(null);
+  const bubbleWrapRef = useRef<HTMLDivElement>(null);
   const [preparedImage, setPreparedImage] = useState<PreparedImage | null>(null);
   const [isPreparing, setIsPreparing] = useState(true);
-  const [isCapturingSnapshot, setIsCapturingSnapshot] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
@@ -68,6 +69,35 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const hasComments = commentsData?.status === 'ok' && commentsData.comments.length > 0;
 
   const babyGender = input?.babyGender;
+
+  // The comment bubble's "덕담 한마디..." text is only ever rasterized by
+  // html2canvas correctly by accident — any text baked into that canvas is at
+  // the mercy of html2canvas's own re-layout (it re-implements CSS layout in
+  // JS rather than using the real browser engine, and is known to be
+  // inconsistent, especially on WebKit/Safari). So for the capture itself, the
+  // bubble is swapped for a plain heart icon with no text to mis-position.
+  // This is done via a direct, synchronous DOM mutation (not React state) so
+  // there's no render/commit timing to race against the html2canvas call that
+  // immediately follows — React state updates aren't guaranteed to reach the
+  // DOM before the next line of code runs, which is exactly what caused this
+  // to intermittently still capture the text bubble on iOS Safari.
+  function showHeartForCapture() {
+    if (heartIconRef.current) {
+      heartIconRef.current.style.display = 'block';
+    }
+    if (bubbleWrapRef.current) {
+      bubbleWrapRef.current.style.display = 'none';
+    }
+  }
+
+  function restoreBubbleAfterCapture() {
+    if (heartIconRef.current) {
+      heartIconRef.current.style.display = 'none';
+    }
+    if (bubbleWrapRef.current) {
+      bubbleWrapRef.current.style.display = '';
+    }
+  }
 
   async function prepareImage(babyGenderValue: string, isCancelled: () => boolean) {
     if (!captureRef.current) {
@@ -84,27 +114,27 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
         await document.fonts.ready;
       }
 
-      // The comment bubble's "덕담 한마디..." text is only ever rasterized by
-      // html2canvas correctly by accident — any text baked into the captured
-      // canvas is at the mercy of its re-layout. So for the capture itself, swap
-      // the bubble out for a plain heart icon (see render below) with no text to
-      // mis-position, and swap back once the capture is done. The wait below
-      // just lets that swap actually commit to the DOM before html2canvas reads
-      // it; html2canvas's own imageTimeout covers the heart icon's own load.
-      setIsCapturingSnapshot(true);
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-
-      const canvas = await raceWithTimeout(
-        html2canvas(captureRef.current as HTMLElement, {
-          scale: 2,
-          backgroundColor: '#ffffff',
-          useCORS: true,
-          allowTaint: false,
-          imageTimeout: 8000,
-        }),
-        CAPTURE_TIMEOUT_MS,
-        '이미지 캡처 시간이 초과되었습니다.',
-      );
+      showHeartForCapture();
+      // The heart icon is `priority`-loaded so it should already be ready by
+      // now, but confirm rather than assume — it's hidden by default, and a
+      // hidden/zero-size image can't rely on lazy-load viewport intersection.
+      await waitForImagesToLoad(captureRef.current);
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await raceWithTimeout(
+          html2canvas(captureRef.current as HTMLElement, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            allowTaint: false,
+            imageTimeout: 8000,
+          }),
+          CAPTURE_TIMEOUT_MS,
+          '이미지 캡처 시간이 초과되었습니다.',
+        );
+      } finally {
+        restoreBubbleAfterCapture();
+      }
       if (isCancelled()) {
         return;
       }
@@ -123,7 +153,6 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
       setSaveError(message);
     } finally {
       if (!isCancelled()) {
-        setIsCapturingSnapshot(false);
         setIsPreparing(false);
       }
     }
@@ -217,64 +246,64 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           className={`relative mt-6 flex w-full justify-center ${isPreparing ? '' : 'animate-float'}`}
           style={{ animationDelay: '0.3s' }}
         >
-          {isCapturingSnapshot ? (
-            // Captured/saved images should never bake in the "덕담 한마디..." text —
-            // rendering it via an absolutely-positioned overlay makes it a moving
-            // target for html2canvas's re-layout. A plain heart icon (like the
-            // pre-redesign UI) has nothing to mis-position. This only swaps in for
-            // the brief html2canvas call itself (see prepareImage) — the button
-            // stays interactive at all other times, independent of image prep.
-            <Image
-              src={heartIconSrc}
-              alt=""
-              width={141}
-              height={126}
-              aria-hidden="true"
-              unoptimized
-              className="h-auto w-[min(70px,18vw)]"
-            />
-          ) : eventId ? (
-            <button
-              type="button"
-              aria-label="덕담 남기기"
-              className="relative block aspect-[588/219] w-[min(196px,50vw)] cursor-pointer border-0 bg-transparent p-0"
-              onClick={() => {
-                setCommentModalView(hasComments ? 'list' : 'invite');
-                setIsCommentModalOpen(true);
-              }}
-            >
-              <Image
-                src="/img/step3/comment-bubble.png"
-                alt=""
-                width={588}
-                height={219}
-                unoptimized
-                className="h-auto w-full"
-              />
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
-                <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
-                  덕담 한마디 남겨 주세요♥
-                </span>
-              </div>
-            </button>
-          ) : (
-            <div className="relative aspect-[588/219] w-[min(196px,50vw)]">
-              <Image
-                src="/img/step3/comment-bubble.png"
-                alt=""
-                width={588}
-                height={219}
-                aria-hidden="true"
-                unoptimized
-                className="h-auto w-full"
-              />
-              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[63%] items-center justify-center">
-                <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
-                  덕담 한마디 남겨 주세요♥
-                </span>
-              </div>
-            </div>
-          )}
+          {/* Hidden by default; shown only for the brief html2canvas capture via a
+              direct ref mutation in prepareImage (see showHeartForCapture). */}
+          <Image
+            ref={heartIconRef}
+            src={heartIconSrc}
+            alt=""
+            width={141}
+            height={126}
+            aria-hidden="true"
+            unoptimized
+            priority
+            style={{ display: 'none' }}
+            className="h-auto w-[min(70px,18vw)]"
+          />
+          <div ref={bubbleWrapRef} className="relative aspect-[588/219] w-[min(196px,50vw)]">
+            {eventId ? (
+              <button
+                type="button"
+                aria-label="덕담 남기기"
+                className="absolute inset-0 block w-full cursor-pointer border-0 bg-transparent p-0"
+                onClick={() => {
+                  setCommentModalView(hasComments ? 'list' : 'invite');
+                  setIsCommentModalOpen(true);
+                }}
+              >
+                <Image
+                  src="/img/step3/comment-bubble.png"
+                  alt=""
+                  width={588}
+                  height={219}
+                  unoptimized
+                  className="h-auto w-full"
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
+                  <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                    덕담 한마디 남겨 주세요♥
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <>
+                <Image
+                  src="/img/step3/comment-bubble.png"
+                  alt=""
+                  width={588}
+                  height={219}
+                  aria-hidden="true"
+                  unoptimized
+                  className="h-auto w-full"
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
+                  <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                    덕담 한마디 남겨 주세요♥
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <Image

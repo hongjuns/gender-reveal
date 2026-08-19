@@ -37,9 +37,16 @@ function mockCanvasSuccess() {
 }
 
 // jsdom never actually loads <img> sources, so the component's image-load wait
-// would hang forever in tests unless we fire the load event ourselves.
+// would hang forever in tests unless we fire the load event ourselves. We also
+// stub `.complete`/`.naturalWidth` (real browsers set these once an image has
+// genuinely loaded) so a *second* wait on the same already-"loaded" image
+// short-circuits instead of needing another one-shot load event that already
+// passed — matching prepareImage calling waitForImagesToLoad more than once
+// (initial load, then again right before capture for the heart icon).
 function resolveAllImageLoads() {
   document.body.querySelectorAll('img').forEach((img) => {
+    Object.defineProperty(img, 'complete', { value: true, configurable: true });
+    Object.defineProperty(img, 'naturalWidth', { value: 1, configurable: true });
     fireEvent.load(img);
   });
 }
