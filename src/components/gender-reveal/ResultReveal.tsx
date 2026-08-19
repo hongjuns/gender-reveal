@@ -237,7 +237,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
             <button
               type="button"
               aria-label="덕담 남기기"
-              className="relative block w-[min(196px,50vw)] cursor-pointer border-0 bg-transparent p-0"
+              className="relative block aspect-[588/219] w-[min(196px,50vw)] cursor-pointer border-0 bg-transparent p-0"
               onClick={() => {
                 setCommentModalView(hasComments ? 'list' : 'invite');
                 setIsCommentModalOpen(true);
@@ -258,7 +258,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
               </div>
             </button>
           ) : (
-            <div className="relative w-[min(196px,50vw)]">
+            <div className="relative aspect-[588/219] w-[min(196px,50vw)]">
               <Image
                 src="/img/step3/comment-bubble.png"
                 alt=""
