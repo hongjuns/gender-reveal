@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act, within } from '@testing-library/react';
+import { render, screen, fireEvent, act, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import html2canvas from 'html2canvas';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -197,9 +197,27 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
 
     expect(screen.getByRole('dialog', { name: '덕담 안내' })).toBeInTheDocument();
+  });
+
+  it('댓글 목록을 불러오는 동안에는 하트 아이콘이 비활성 상태다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    let resolveComments: (value: { status: 'ok'; comments: never[] }) => void = () => {};
+    listEventCommentsMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveComments = resolve;
+      }),
+    );
+    renderResultReveal({ eventId: 'event-1' });
+
+    expect(await screen.findByRole('button', { name: '덕담 남기기' })).toBeDisabled();
+
+    resolveComments({ status: 'ok', comments: [] });
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
   });
 
   it('안내 뷰에서 덕담 남기기 클릭 시 작성 뷰로 전환된다', async () => {
@@ -209,7 +227,8 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
     const dialog = screen.getByRole('dialog', { name: '덕담 안내' });
     await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));
 
@@ -227,7 +246,8 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
     await user.click(within(screen.getByRole('dialog', { name: '덕담 안내' })).getByRole('button', { name: '덕담 남기기' }));
 
     const writeDialog = screen.getByRole('dialog', { name: '덕담 작성' });
@@ -255,7 +275,8 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
 
     expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
   });
@@ -270,7 +291,8 @@ describe('ResultReveal', () => {
     const user = userEvent.setup();
     renderResultReveal({ eventId: 'event-1' });
 
-    await user.click(await screen.findByRole('button', { name: '덕담 남기기' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
 
     const dialog = screen.getByRole('dialog', { name: '덕담 목록' });
     await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));

@@ -56,8 +56,6 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const handleCreateNew = onCreateNew ?? resetAll;
 
   const captureRef = useRef<HTMLDivElement>(null);
-  const heartIconRef = useRef<HTMLImageElement>(null);
-  const bubbleWrapRef = useRef<HTMLDivElement>(null);
   const [preparedImage, setPreparedImage] = useState<PreparedImage | null>(null);
   const [isPreparing, setIsPreparing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -65,7 +63,10 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [commentModalView, setCommentModalView] = useState<'invite' | 'write' | 'success' | 'list'>('invite');
   const [commentSenderName, setCommentSenderName] = useState('');
-  const { data: commentsData } = useEventComments(eventId ?? '', Boolean(eventId));
+  const { data: commentsData, isPending: isCommentsPending } = useEventComments(
+    eventId ?? '',
+    Boolean(eventId),
+  );
   const hasComments = commentsData?.status === 'ok' && commentsData.comments.length > 0;
 
   const babyGender = input?.babyGender;
@@ -76,29 +77,14 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   // JS rather than using the real browser engine, and is known to be
   // inconsistent, especially on WebKit/Safari). So for the capture itself, the
   // bubble is swapped for a plain heart icon with no text to mis-position.
-  // This is done via a direct, synchronous DOM mutation (not React state) so
-  // there's no render/commit timing to race against the html2canvas call that
-  // immediately follows — React state updates aren't guaranteed to reach the
-  // DOM before the next line of code runs, which is exactly what caused this
-  // to intermittently still capture the text bubble on iOS Safari.
-  function showHeartForCapture() {
-    if (heartIconRef.current) {
-      heartIconRef.current.style.display = 'block';
-    }
-    if (bubbleWrapRef.current) {
-      bubbleWrapRef.current.style.display = 'none';
-    }
-  }
-
-  function restoreBubbleAfterCapture() {
-    if (heartIconRef.current) {
-      heartIconRef.current.style.display = 'none';
-    }
-    if (bubbleWrapRef.current) {
-      bubbleWrapRef.current.style.display = '';
-    }
-  }
-
+  //
+  // This swap must never touch the live DOM the user is actually looking at —
+  // it used to, via a direct ref mutation, and on a fast balloon→result
+  // transition the heart would flash on screen for real before the capture
+  // restored the bubble. html2canvas clones the target subtree into an
+  // offscreen iframe before rasterizing it, and its `onclone` hook runs
+  // against that clone — so the swap happens there instead, leaving what's
+  // on screen untouched for the whole capture.
   async function prepareImage(babyGenderValue: string, isCancelled: () => boolean) {
     if (!captureRef.current) {
       return;
@@ -114,27 +100,27 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
         await document.fonts.ready;
       }
 
-      showHeartForCapture();
-      // The heart icon is `priority`-loaded so it should already be ready by
-      // now, but confirm rather than assume — it's hidden by default, and a
-      // hidden/zero-size image can't rely on lazy-load viewport intersection.
-      await waitForImagesToLoad(captureRef.current);
-      let canvas: HTMLCanvasElement;
-      try {
-        canvas = await raceWithTimeout(
-          html2canvas(captureRef.current as HTMLElement, {
-            scale: 2,
-            backgroundColor: '#ffffff',
-            useCORS: true,
-            allowTaint: false,
-            imageTimeout: 8000,
-          }),
-          CAPTURE_TIMEOUT_MS,
-          '이미지 캡처 시간이 초과되었습니다.',
-        );
-      } finally {
-        restoreBubbleAfterCapture();
-      }
+      const canvas = await raceWithTimeout(
+        html2canvas(captureRef.current as HTMLElement, {
+          scale: 2,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          imageTimeout: 8000,
+          onclone: (clonedDoc) => {
+            const heart = clonedDoc.querySelector<HTMLElement>('[data-capture-heart]');
+            const bubble = clonedDoc.querySelector<HTMLElement>('[data-capture-bubble]');
+            if (heart) {
+              heart.style.display = 'block';
+            }
+            if (bubble) {
+              bubble.style.display = 'none';
+            }
+          },
+        }),
+        CAPTURE_TIMEOUT_MS,
+        '이미지 캡처 시간이 초과되었습니다.',
+      );
       if (isCancelled()) {
         return;
       }
@@ -246,10 +232,10 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
           className={`relative mt-6 flex w-full justify-center ${isPreparing ? '' : 'animate-float'}`}
           style={{ animationDelay: '0.3s' }}
         >
-          {/* Hidden by default; shown only for the brief html2canvas capture via a
-              direct ref mutation in prepareImage (see showHeartForCapture). */}
+          {/* Hidden on screen; only made visible inside html2canvas's cloned
+              document during capture (see the `onclone` handler above). */}
           <Image
-            ref={heartIconRef}
+            data-capture-heart
             src={heartIconSrc}
             alt=""
             width={141}
@@ -260,13 +246,18 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
             style={{ display: 'none' }}
             className="h-auto w-[min(70px,18vw)]"
           />
-          <div ref={bubbleWrapRef} className="relative aspect-[588/219] w-[min(196px,50vw)]">
+          <div data-capture-bubble className="relative aspect-[588/219] w-[min(196px,50vw)]">
             {eventId ? (
               <button
                 type="button"
                 aria-label="덕담 남기기"
-                className="absolute inset-0 block w-full cursor-pointer border-0 bg-transparent p-0"
+                className="absolute inset-0 block w-full cursor-pointer border-0 bg-transparent p-0 disabled:cursor-not-allowed"
+                disabled={isCommentsPending}
                 onClick={() => {
+                  // Comment list must be fetched before deciding invite vs. list —
+                  // deciding while the query is still pending would show the
+                  // "no comments yet" invite view even when comments already
+                  // exist, since `hasComments` would still be false.
                   setCommentModalView(hasComments ? 'list' : 'invite');
                   setIsCommentModalOpen(true);
                 }}
