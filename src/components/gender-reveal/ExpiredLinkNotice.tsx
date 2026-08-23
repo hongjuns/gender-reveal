@@ -1,4 +1,4 @@
-const CONTACT_ADMIN_URL = 'https://blog.naver.com/hyundgn/224365769203';
+const CONTACT_ADMIN_URL = 'https://blog.naver.com/hyundgn/224387559374';
 
 export function ExpiredLinkNotice() {
   return (

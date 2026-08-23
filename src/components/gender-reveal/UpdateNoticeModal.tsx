@@ -7,7 +7,7 @@ interface UpdateNoticeModalProps {
   onClose: () => void;
 }
 
-const UPDATE_LOG_URL = 'https://blog.naver.com/hyundgn/224365769203';
+const UPDATE_LOG_URL = 'https://blog.naver.com/hyundgn/224387559374';
 
 export function UpdateNoticeModal({ onClose }: UpdateNoticeModalProps) {
   useEffect(() => {
