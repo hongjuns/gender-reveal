@@ -25,7 +25,7 @@ export function CommentInviteView({ babyNickname, onWriteClick }: CommentInviteV
         className="mt-8 h-auto w-[192px]"
       />
 
-      <p className="mt-8 whitespace-pre-line text-center font-sans text-sm leading-[18px] text-ink">
+      <p className="mt-8 whitespace-pre-line text-center font-pixel text-base leading-[18px] text-ink">
         {`${babyNickname}를 기다리는 마음을\n따뜻한 한마디로 남겨주세요 💗`}
       </p>
 

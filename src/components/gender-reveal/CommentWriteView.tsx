@@ -86,7 +86,7 @@ export function CommentWriteView({ eventId, babyNickname, onSubmitted }: Comment
             placeholder="곧 만날 아기에게 해주고 싶은 말을 적어주세요 :)"
             className="h-[132px] w-full resize-none rounded border border-[#cdcdcd] p-3 pb-7 font-sans text-base text-ink outline-none placeholder:text-ink-muted sm:text-sm"
           />
-          <span className="pointer-events-none absolute bottom-2 right-3 font-pixel text-sm text-ink-muted">
+          <span className="pointer-events-none absolute bottom-4 right-3 font-pixel text-sm text-ink-muted">
             {content.length}/{CONTENT_MAX_LENGTH}자
           </span>
         </div>
