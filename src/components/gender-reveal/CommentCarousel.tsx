@@ -119,10 +119,10 @@ export function CommentCarousel({ eventId, babyNickname, onViewWrite }: CommentC
           />
 
           <div className="mt-6 flex min-h-[90px] w-full flex-col items-center justify-center gap-3">
-            <p className="m-0 whitespace-pre-line text-center font-pixel text-sm leading-[18px] text-ink-muted">
+            <p className="m-0 whitespace-pre-line text-center font-sans text-base leading-[18px] text-ink">
               {current.content}
             </p>
-            <p className="m-0 text-center font-pixel text-base text-ink">{`From. ${current.senderName}`}</p>
+            <p className="m-0 text-center font-sans text-base font-bold text-ink">{`From. ${current.senderName}`}</p>
           </div>
         </div>
 
