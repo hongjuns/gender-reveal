@@ -5,6 +5,7 @@ import { useCreateGenderRevealEvent } from '@/hooks/useCreateGenderRevealEvent';
 import type { BabyGender } from '@/types/genderReveal';
 import { parseDateInputValue } from '@/lib/date';
 import { LinkGeneratedModal } from './LinkGeneratedModal';
+import { UpdateNoticeModal } from './UpdateNoticeModal';
 
 const inputClassName =
   'h-12 w-full appearance-none rounded border bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
@@ -40,6 +41,7 @@ export function StepOneForm() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>(initialFieldErrors);
   const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
+  const [isUpdateNoticeOpen, setIsUpdateNoticeOpen] = useState(true);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -210,6 +212,10 @@ export function StepOneForm() {
           shareLink={generatedShareLink}
           onClose={() => setGeneratedShareLink(null)}
         />
+      )}
+
+      {isUpdateNoticeOpen && (
+        <UpdateNoticeModal onClose={() => setIsUpdateNoticeOpen(false)} />
       )}
     </>
   );

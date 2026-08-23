@@ -22,6 +22,17 @@ async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('StepOneForm', () => {
+  it('진입 시 업데이트 안내 팝업을 보여주고, 닫기 클릭 시 사라진다', async () => {
+    const user = userEvent.setup();
+    render(<StepOneForm />);
+
+    expect(screen.getByRole('dialog', { name: '업데이트 안내' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: '닫기' }));
+
+    expect(screen.queryByRole('dialog', { name: '업데이트 안내' })).not.toBeInTheDocument();
+  });
+
   it('필수값이 비어 있는 채로 제출하면 안내 메시지를 노출하고 API를 호출하지 않는다', async () => {
     const user = userEvent.setup();
     render(<StepOneForm />);
@@ -56,7 +67,7 @@ describe('StepOneForm', () => {
       },
       expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
     );
-    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: '풍선이 완성되었어요' })).toBeInTheDocument();
     expect(screen.getByText('🎈 풍선이 완성되었어요!')).toBeInTheDocument();
   });
 
@@ -72,7 +83,7 @@ describe('StepOneForm', () => {
     await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
 
     expect(await screen.findByText('링크 생성에 실패했어요. 다시 시도해주세요')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '풍선이 완성되었어요' })).not.toBeInTheDocument();
   });
 
   it("성별에서 '아들'과 '딸'은 동시에 선택될 수 없다", async () => {
