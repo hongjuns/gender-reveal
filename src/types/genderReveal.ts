@@ -29,3 +29,21 @@ export type GetEventResult =
   | { status: 'ok'; event: GenderRevealEventRecord }
   | { status: 'expired' }
   | { status: 'not_found' };
+
+export interface GenderRevealCommentRecord {
+  id: string;
+  senderName: string;
+  content: string;
+  createdAt: string;
+}
+
+export type ListCommentsResult =
+  | { status: 'ok'; comments: GenderRevealCommentRecord[] }
+  | { status: 'expired' }
+  | { status: 'not_found' };
+
+export type CreateCommentResult =
+  | { status: 'ok'; comment: GenderRevealCommentRecord }
+  | { status: 'expired' }
+  | { status: 'not_found' }
+  | { status: 'invalid'; message: string };

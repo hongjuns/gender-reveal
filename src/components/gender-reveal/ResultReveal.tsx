@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import html2canvas from 'html2canvas';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
+import { useEventComments } from '@/hooks/useEventComments';
 import { formatKstDate } from '@/lib/date';
+import { CommentModal } from './CommentModal';
+import { CommentWriteView } from './CommentWriteView';
+import { CommentCarousel } from './CommentCarousel';
+import { CommentInviteView } from './CommentInviteView';
+import { CommentSuccessView } from './CommentSuccessView';
 
 const SHARE_TIMEOUT_MS = 15000;
 const CAPTURE_TIMEOUT_MS = 12000;
@@ -40,9 +46,10 @@ interface PreparedImage {
 
 interface ResultRevealProps {
   onCreateNew?: () => void;
+  eventId?: string;
 }
 
-export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
+export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
   const input = useGenderRevealStore((state) => state.input);
   const restart = useGenderRevealStore((state) => state.restart);
   const resetAll = useGenderRevealStore((state) => state.resetAll);
@@ -53,9 +60,31 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
   const [isPreparing, setIsPreparing] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [commentModalView, setCommentModalView] = useState<'invite' | 'write' | 'success' | 'list'>('invite');
+  const [commentSenderName, setCommentSenderName] = useState('');
+  const { data: commentsData, isPending: isCommentsPending } = useEventComments(
+    eventId ?? '',
+    Boolean(eventId),
+  );
+  const hasComments = commentsData?.status === 'ok' && commentsData.comments.length > 0;
 
   const babyGender = input?.babyGender;
 
+  // The comment bubble's "덕담 한마디..." text is only ever rasterized by
+  // html2canvas correctly by accident — any text baked into that canvas is at
+  // the mercy of html2canvas's own re-layout (it re-implements CSS layout in
+  // JS rather than using the real browser engine, and is known to be
+  // inconsistent, especially on WebKit/Safari). So for the capture itself, the
+  // bubble is swapped for a plain heart icon with no text to mis-position.
+  //
+  // This swap must never touch the live DOM the user is actually looking at —
+  // it used to, via a direct ref mutation, and on a fast balloon→result
+  // transition the heart would flash on screen for real before the capture
+  // restored the bubble. html2canvas clones the target subtree into an
+  // offscreen iframe before rasterizing it, and its `onclone` hook runs
+  // against that clone — so the swap happens there instead, leaving what's
+  // on screen untouched for the whole capture.
   async function prepareImage(babyGenderValue: string, isCancelled: () => boolean) {
     if (!captureRef.current) {
       return;
@@ -64,6 +93,13 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
     setSaveError(null);
     try {
       await waitForImagesToLoad(captureRef.current);
+      if (document.fonts?.ready) {
+        // Without this, html2canvas can capture before the custom pixel font
+        // finishes loading (font-display: swap renders a fallback font first),
+        // which has different line-height metrics and throws off text positioning.
+        await document.fonts.ready;
+      }
+
       const canvas = await raceWithTimeout(
         html2canvas(captureRef.current as HTMLElement, {
           scale: 2,
@@ -71,6 +107,16 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           useCORS: true,
           allowTaint: false,
           imageTimeout: 8000,
+          onclone: (clonedDoc) => {
+            const heart = clonedDoc.querySelector<HTMLElement>('[data-capture-heart]');
+            const bubble = clonedDoc.querySelector<HTMLElement>('[data-capture-bubble]');
+            if (heart) {
+              heart.style.display = 'block';
+            }
+            if (bubble) {
+              bubble.style.display = 'none';
+            }
+          },
         }),
         CAPTURE_TIMEOUT_MS,
         '이미지 캡처 시간이 초과되었습니다.',
@@ -122,13 +168,13 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
   const isSon = babyGender === 'son';
   const genderLabel = isSon ? '아들' : '딸';
   const imageSrc = isSon ? '/img/step3/baby-son.png' : '/img/step3/baby-daughter.png';
-  const bubbleSrc = isSon ? '/img/step3/bubble-son.png' : '/img/step3/bubble-daughter.png';
   const imageAlt = isSon ? '남아 일러스트' : '여아 일러스트';
   const pointColorClassName = isSon ? 'text-boy-point' : 'text-girl-point';
   const dateText = formatKstDate(dueDate);
   const imageDimensions = isSon
     ? { width: 243, height: 335, sizeClassName: 'w-[min(168px,43vw)]' }
     : { width: 298, height: 347, sizeClassName: 'w-[min(200px,51vw)]' };
+  const heartIconSrc = isSon ? '/img/step2/heart-blue.png' : '/img/step2/heart-pink.png';
 
   async function handleSaveResult() {
     if (isPreparing || isSaving) {
@@ -172,7 +218,7 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
   }
 
   return (
-    <section className="flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
+    <section className="relative flex w-[min(420px,100%)] animate-fadeIn flex-col items-center bg-white text-center">
       <div ref={captureRef} className="flex w-full flex-col items-center bg-white p-6">
         <p
           data-testid="result-message"
@@ -182,15 +228,74 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           <span className={pointColorClassName}>{`'${genderLabel}'이에요!`}</span>
         </p>
 
-        <Image
-          src={bubbleSrc}
-          alt=""
-          width={931}
-          height={771}
-          aria-hidden="true"
-          unoptimized
-          className={`mt-6 h-auto w-[min(70px,18vw)] ${isPreparing ? '' : 'animate-float'}`}
-        />
+        <div
+          className={`relative mt-6 flex w-full justify-center ${isPreparing ? '' : 'animate-float'}`}
+          style={{ animationDelay: '0.3s' }}
+        >
+          {/* Hidden on screen; only made visible inside html2canvas's cloned
+              document during capture (see the `onclone` handler above). */}
+          <Image
+            data-capture-heart
+            src={heartIconSrc}
+            alt=""
+            width={141}
+            height={126}
+            aria-hidden="true"
+            unoptimized
+            priority
+            style={{ display: 'none' }}
+            className="h-auto w-[min(70px,18vw)]"
+          />
+          <div data-capture-bubble className="relative aspect-[588/219] w-[min(196px,50vw)]">
+            {eventId ? (
+              <button
+                type="button"
+                aria-label="덕담 남기기"
+                className="absolute inset-0 block w-full cursor-pointer border-0 bg-transparent p-0 disabled:cursor-not-allowed"
+                disabled={isCommentsPending}
+                onClick={() => {
+                  // Comment list must be fetched before deciding invite vs. list —
+                  // deciding while the query is still pending would show the
+                  // "no comments yet" invite view even when comments already
+                  // exist, since `hasComments` would still be false.
+                  setCommentModalView(hasComments ? 'list' : 'invite');
+                  setIsCommentModalOpen(true);
+                }}
+              >
+                <Image
+                  src="/img/step3/comment-bubble.png"
+                  alt=""
+                  width={588}
+                  height={219}
+                  unoptimized
+                  className="h-auto w-full"
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
+                  <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                    덕담 한마디 남겨 주세요♥
+                  </span>
+                </div>
+              </button>
+            ) : (
+              <>
+                <Image
+                  src="/img/step3/comment-bubble.png"
+                  alt=""
+                  width={588}
+                  height={219}
+                  aria-hidden="true"
+                  unoptimized
+                  className="h-auto w-full"
+                />
+                <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[70%] items-center justify-center">
+                  <span className="whitespace-nowrap font-pixel text-sm tracking-[-0.7px] text-ink">
+                    덕담 한마디 남겨 주세요♥
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
 
         <Image
           src={imageSrc}
@@ -247,6 +352,40 @@ export function ResultReveal({ onCreateNew }: ResultRevealProps = {}) {
           젠더리빌 새로 만들기
         </button>
       </div>
+
+      {eventId && (
+        <CommentModal
+          isOpen={isCommentModalOpen}
+          view={commentModalView}
+          onClose={() => setIsCommentModalOpen(false)}
+        >
+          {commentModalView === 'invite' ? (
+            <CommentInviteView babyNickname={babyNickname} onWriteClick={() => setCommentModalView('write')} />
+          ) : commentModalView === 'write' ? (
+            <CommentWriteView
+              eventId={eventId}
+              babyNickname={babyNickname}
+              onSubmitted={(senderName) => {
+                setCommentSenderName(senderName);
+                setCommentModalView('success');
+              }}
+            />
+          ) : commentModalView === 'success' ? (
+            <CommentSuccessView
+              babyNickname={babyNickname}
+              senderName={commentSenderName}
+              isSon={isSon}
+              onViewComments={() => setCommentModalView('list')}
+            />
+          ) : (
+            <CommentCarousel
+              eventId={eventId}
+              babyNickname={babyNickname}
+              onViewWrite={() => setCommentModalView('write')}
+            />
+          )}
+        </CommentModal>
+      )}
     </section>
   );
 }

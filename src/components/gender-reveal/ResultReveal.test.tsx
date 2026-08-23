@@ -1,10 +1,31 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import html2canvas from 'html2canvas';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ComponentProps } from 'react';
 import { ResultReveal } from './ResultReveal';
 import { useGenderRevealStore } from '@/stores/genderRevealStore';
+import { listEventComments, createEventComment } from '@/lib/api/comments';
 
 jest.mock('html2canvas', () => jest.fn());
+jest.mock('@/lib/api/comments', () => ({
+  listEventComments: jest.fn(),
+  createEventComment: jest.fn(),
+}));
+
+const listEventCommentsMock = listEventComments as jest.Mock;
+const createEventCommentMock = createEventComment as jest.Mock;
+
+function renderResultReveal(props: ComponentProps<typeof ResultReveal> = {}) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <ResultReveal {...props} />
+    </QueryClientProvider>,
+  );
+}
 
 function mockCanvasSuccess() {
   (html2canvas as jest.Mock).mockResolvedValue({
@@ -16,9 +37,16 @@ function mockCanvasSuccess() {
 }
 
 // jsdom never actually loads <img> sources, so the component's image-load wait
-// would hang forever in tests unless we fire the load event ourselves.
+// would hang forever in tests unless we fire the load event ourselves. We also
+// stub `.complete`/`.naturalWidth` (real browsers set these once an image has
+// genuinely loaded) so a *second* wait on the same already-"loaded" image
+// short-circuits instead of needing another one-shot load event that already
+// passed — matching prepareImage calling waitForImagesToLoad more than once
+// (initial load, then again right before capture for the heart icon).
 function resolveAllImageLoads() {
   document.body.querySelectorAll('img').forEach((img) => {
+    Object.defineProperty(img, 'complete', { value: true, configurable: true });
+    Object.defineProperty(img, 'naturalWidth', { value: 1, configurable: true });
     fireEvent.load(img);
   });
 }
@@ -43,16 +71,21 @@ function seedResultState(babyGender: 'son' | 'daughter') {
 // Renders and waits for the component's automatic on-mount image preparation
 // (html2canvas capture) to finish, i.e. until the save button is enabled.
 async function renderAndWaitUntilReady() {
-  render(<ResultReveal />);
+  renderResultReveal();
   resolveAllImageLoads();
   return screen.findByRole('button', { name: '결과 저장하기' });
 }
 
 describe('ResultReveal', () => {
+  beforeEach(() => {
+    listEventCommentsMock.mockReset();
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
+  });
+
   it("성별이 '아들'이면 남아 이미지와 문구를 노출한다", () => {
     seedResultState('son');
     mockCanvasSuccess();
-    render(<ResultReveal />);
+    renderResultReveal();
 
     expect(screen.getByAltText('남아 일러스트')).toHaveAttribute(
       'src',
@@ -69,7 +102,7 @@ describe('ResultReveal', () => {
   it("성별이 '딸'이면 여아 이미지와 문구를 노출한다", () => {
     seedResultState('daughter');
     mockCanvasSuccess();
-    render(<ResultReveal />);
+    renderResultReveal();
 
     expect(screen.getByAltText('여아 일러스트')).toHaveAttribute(
       'src',
@@ -86,7 +119,7 @@ describe('ResultReveal', () => {
   it('결과 화면 진입 시 저장 버튼은 이미지 준비가 끝날 때까지 비활성 상태다', () => {
     seedResultState('son');
     mockCanvasSuccess();
-    render(<ResultReveal />);
+    renderResultReveal();
 
     expect(screen.getByRole('button', { name: '이미지 준비 중...' })).toBeDisabled();
   });
@@ -95,7 +128,7 @@ describe('ResultReveal', () => {
     seedResultState('son');
     mockCanvasSuccess();
     const user = userEvent.setup();
-    render(<ResultReveal />);
+    renderResultReveal();
 
     await user.click(screen.getByRole('button', { name: /뒤로가기/ }));
 
@@ -109,7 +142,7 @@ describe('ResultReveal', () => {
     seedResultState('son');
     mockCanvasSuccess();
     const user = userEvent.setup();
-    render(<ResultReveal />);
+    renderResultReveal();
 
     await user.click(screen.getByRole('button', { name: '젠더리빌 새로 만들기' }));
 
@@ -123,7 +156,7 @@ describe('ResultReveal', () => {
     mockCanvasSuccess();
     const user = userEvent.setup();
     const onCreateNew = jest.fn();
-    render(<ResultReveal onCreateNew={onCreateNew} />);
+    renderResultReveal({ onCreateNew });
 
     await user.click(screen.getByRole('button', { name: '젠더리빌 새로 만들기' }));
 
@@ -146,6 +179,125 @@ describe('ResultReveal', () => {
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
     clickSpy.mockRestore();
+  });
+
+  it('eventId가 없으면 하트 아이콘(덕담 남기기 버튼)이 렌더링되지 않는다', () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    renderResultReveal();
+
+    expect(screen.queryByRole('button', { name: '덕담 남기기' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('댓글이 0건이면 하트 아이콘 클릭 시 안내 뷰로 CommentModal이 열린다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 안내' })).toBeInTheDocument();
+  });
+
+  it('댓글 목록을 불러오는 동안에는 하트 아이콘이 비활성 상태다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    let resolveComments: (value: { status: 'ok'; comments: never[] }) => void = () => {};
+    listEventCommentsMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveComments = resolve;
+      }),
+    );
+    renderResultReveal({ eventId: 'event-1' });
+
+    expect(await screen.findByRole('button', { name: '덕담 남기기' })).toBeDisabled();
+
+    resolveComments({ status: 'ok', comments: [] });
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+  });
+
+  it('안내 뷰에서 덕담 남기기 클릭 시 작성 뷰로 전환된다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
+    const dialog = screen.getByRole('dialog', { name: '덕담 안내' });
+    await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
+  });
+
+  it('작성 뷰에서 완료하기 클릭 시 완료 뷰로 전환되고, 덕담 보러가기 클릭 시 목록 뷰로 전환된다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({ status: 'ok', comments: [] });
+    createEventCommentMock.mockResolvedValue({
+      status: 'ok',
+      comment: { id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' },
+    });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
+    await user.click(within(screen.getByRole('dialog', { name: '덕담 안내' })).getByRole('button', { name: '덕담 남기기' }));
+
+    const writeDialog = screen.getByRole('dialog', { name: '덕담 작성' });
+    await user.click(within(writeDialog).getByPlaceholderText(/곧 만날 아기에게/));
+    await user.paste('축하해요');
+    await user.click(within(writeDialog).getByPlaceholderText('보내는 사람'));
+    await user.paste('지민');
+    await user.click(within(writeDialog).getByRole('button', { name: '완료하기' }));
+
+    const successDialog = await screen.findByRole('dialog', { name: '덕담 전달 완료' });
+    expect(within(successDialog).getByText(/콩이가 지민님의/)).toBeInTheDocument();
+
+    await user.click(within(successDialog).getByRole('button', { name: '덕담 보러가기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
+  });
+
+  it('댓글이 1건 이상이면 하트 아이콘 클릭 시 바로 목록 뷰로 CommentModal이 열린다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({
+      status: 'ok',
+      comments: [{ id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' }],
+    });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 목록' })).toBeInTheDocument();
+  });
+
+  it('목록 뷰에서 덕담 남기기 클릭 시 작성 뷰로 전환된다', async () => {
+    seedResultState('son');
+    mockCanvasSuccess();
+    listEventCommentsMock.mockResolvedValue({
+      status: 'ok',
+      comments: [{ id: 'c1', senderName: '지민', content: '축하해요', createdAt: '2026-08-09T00:00:00.000Z' }],
+    });
+    const user = userEvent.setup();
+    renderResultReveal({ eventId: 'event-1' });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: '덕담 남기기' })).toBeEnabled());
+    await user.click(screen.getByRole('button', { name: '덕담 남기기' }));
+
+    const dialog = screen.getByRole('dialog', { name: '덕담 목록' });
+    await user.click(within(dialog).getByRole('button', { name: '덕담 남기기' }));
+
+    expect(screen.getByRole('dialog', { name: '덕담 작성' })).toBeInTheDocument();
   });
 
   it("'결과 저장하기' 클릭 시 공유 API를 지원하면(iOS 등) 다운로드 대신 공유 시트를 띄운다", async () => {
@@ -174,7 +326,7 @@ describe('ResultReveal', () => {
       seedResultState('son');
       (html2canvas as jest.Mock).mockReturnValue(new Promise(() => {}));
 
-      render(<ResultReveal />);
+      renderResultReveal();
       resolveAllImageLoads();
 
       await act(async () => {
@@ -194,7 +346,7 @@ describe('ResultReveal', () => {
     (html2canvas as jest.Mock).mockRejectedValueOnce(new Error('첫 시도 실패'));
     const clickSpy = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
-    render(<ResultReveal />);
+    renderResultReveal();
     resolveAllImageLoads();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('첫 시도 실패');
