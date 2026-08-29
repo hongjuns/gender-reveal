@@ -251,7 +251,7 @@ export function ResultReveal({ onCreateNew, eventId }: ResultRevealProps = {}) {
               <button
                 type="button"
                 aria-label="덕담 남기기"
-                className="absolute inset-0 block w-full cursor-pointer border-0 bg-transparent p-0 disabled:cursor-not-allowed"
+                className="absolute inset-0 block w-full origin-center animate-bubbleBounce cursor-pointer border-0 bg-transparent p-0 will-change-transform disabled:cursor-not-allowed"
                 disabled={isCommentsPending}
                 onClick={() => {
                   // Comment list must be fetched before deciding invite vs. list —

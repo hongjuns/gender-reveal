@@ -55,6 +55,12 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0) scale(1)' },
           '50%': { transform: 'translateY(-5px) scale(1.08)' },
         },
+        bubbleBounce: {
+          '0%, 50%, 100%': { transform: 'scale(1)' },
+          '12%': { transform: 'scale(0.92)' },
+          '28%': { transform: 'scale(1.06)' },
+          '40%': { transform: 'scale(0.98)' },
+        },
         tabPop: {
           '0%': {
             transform: 'translate(calc(-50% + var(--tap-offset-x, 0px)), 0) scale(0.7)',
@@ -82,6 +88,7 @@ module.exports = {
         pulseSoft: 'pulseSoft 1.4s ease-in-out infinite',
         float: 'float 2.6s ease-in-out infinite',
         heartFloat: 'heartFloat 1.8s ease-in-out infinite',
+        bubbleBounce: 'bubbleBounce 2.4s ease-in-out infinite',
         tabPop: 'tabPop 0.6s ease-out forwards',
       },
     },
