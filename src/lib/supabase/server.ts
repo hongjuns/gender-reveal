@@ -63,6 +63,11 @@ export function getSupabaseServerClient() {
 
   cachedClient = createClient<Database>(url, key, {
     auth: { persistSession: false },
+    global: {
+      // Next.js는 fetch()를 기본 force-cache로 캐싱해 DB를 직접 갱신해도 이전 응답을
+      // 계속 반환할 수 있어(예: link_expires_at 연장), 항상 최신 값을 조회하도록 강제한다.
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
   });
   return cachedClient;
 }
