@@ -1,5 +1,13 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## v3: 여러 풍선 만들기와 관리 링크
+
+- 만드는 사람은 태명·예정일·성별을 한 번 입력하고 받는 사람을 최대 10명까지 추가해 풍선을 한 번에 만든다.
+- 생성 후 `/gender-reveal/manage/{관리 코드}` 관리 화면에서 받는 사람별 공유 링크 복사, 삭제(댓글 포함), 풍선별 1회 7일 연장을 할 수 있다.
+- 로그인이 없으므로 관리 링크가 곧 관리 권한이다. 관리 코드는 받는 사람용 화면·API에 노출되지 않는다.
+- 필요한 DB 변경: `supabase/migrations/0005_event_code_and_extension.sql`, `0006_events_anon_update_delete_policies.sql`
+- 상세 설계: `specs/004-multi-balloon-management/`
+
 ## Getting Started
 
 First, run the development server:

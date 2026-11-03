@@ -9,6 +9,8 @@ export interface GenderRevealEventRow {
   share_link: string;
   link_expires_at: string;
   created_at: string;
+  // 관리 링크용 비밀값. 받는 사람에게 내려가는 응답에 절대 포함하지 않는다.
+  code: string;
 }
 
 export interface GenderRevealCommentRow {
@@ -29,7 +31,7 @@ interface Database {
     Tables: {
       gender_reveal_events: {
         Row: Fresh<GenderRevealEventRow>;
-        Insert: Fresh<GenderRevealEventRow>;
+        Insert: Fresh<Omit<GenderRevealEventRow, 'code'> & Partial<Pick<GenderRevealEventRow, 'code'>>>;
         Update: Fresh<Partial<GenderRevealEventRow>>;
         Relationships: [];
       };

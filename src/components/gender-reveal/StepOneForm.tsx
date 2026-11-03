@@ -1,11 +1,16 @@
 'use client';
 
 import { useId, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCreateGenderRevealEvent } from '@/hooks/useCreateGenderRevealEvent';
 import type { BabyGender } from '@/types/genderReveal';
 import { parseDateInputValue } from '@/lib/date';
-import { LinkGeneratedModal } from './LinkGeneratedModal';
 import { UpdateNoticeModal } from './UpdateNoticeModal';
+import { RecipientListForm } from './RecipientListForm';
+import { BalloonCreatingView } from './BalloonCreatingView';
+
+// 저장이 빨리 끝나도 생성 중 화면을 최소 이 시간만큼 보여준다(spec FR-004a).
+export const MIN_CREATING_VIEW_MS = 2000;
 
 const inputClassName =
   'h-12 w-full appearance-none rounded border bg-input-bg px-3 text-base text-ink placeholder:text-ink-muted focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-slate-400';
@@ -13,34 +18,41 @@ const inputClassName =
 type FieldErrors = {
   babyNickname: boolean;
   dueDate: boolean;
-  recipientName: boolean;
   babyGender: boolean;
 };
 
 const initialFieldErrors: FieldErrors = {
   babyNickname: false,
   dueDate: false,
-  recipientName: false,
   babyGender: false,
 };
+
+type Stage = 'common' | 'recipients' | 'creating';
 
 function fieldBorderClassName(hasError: boolean) {
   return hasError ? 'border-red-500' : 'border-transparent';
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 export function StepOneForm() {
+  const router = useRouter();
   const createEvent = useCreateGenderRevealEvent();
   const nicknameId = useId();
   const dueDateId = useId();
-  const recipientId = useId();
 
+  const [stage, setStage] = useState<Stage>('common');
   const [babyNickname, setBabyNickname] = useState('');
   const [dueDateValue, setDueDateValue] = useState('');
-  const [recipientName, setRecipientName] = useState('');
   const [babyGender, setBabyGender] = useState<BabyGender | ''>('');
+  const [recipientNames, setRecipientNames] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>(initialFieldErrors);
-  const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
   const [isUpdateNoticeOpen, setIsUpdateNoticeOpen] = useState(true);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -49,36 +61,66 @@ export function StepOneForm() {
     const dueDate = parseDateInputValue(dueDateValue);
     const isBabyNicknameEmpty = babyNickname.trim().length === 0;
     const isDueDateInvalid = dueDate === null;
-    const isRecipientNameEmpty = recipientName.trim().length === 0;
 
     setFieldErrors({
       babyNickname: isBabyNicknameEmpty,
       dueDate: isDueDateInvalid,
-      recipientName: isRecipientNameEmpty,
       babyGender: babyGender === '',
     });
 
-    if (isBabyNicknameEmpty || isDueDateInvalid || isRecipientNameEmpty || babyGender === '') {
+    if (isBabyNicknameEmpty || isDueDateInvalid || babyGender === '') {
       setError('정보를 모두 입력해주세요');
       return;
     }
 
     setError(null);
-    createEvent.mutate(
-      {
-        babyNickname: babyNickname.trim(),
-        dueDate: dueDateValue,
-        recipientName: recipientName.trim(),
-        babyGender,
-      },
-      {
-        onSuccess: (data) => {
-          setGeneratedShareLink(data.shareLink);
-        },
-        onError: () => {
-          setError('링크 생성에 실패했어요. 다시 시도해주세요');
-        },
-      },
+    setStage('recipients');
+  }
+
+  async function handleCreate(names: string[]) {
+    if (babyGender === '') {
+      setStage('common');
+      return;
+    }
+
+    setRecipientNames(names);
+    setCreateError(null);
+    setStage('creating');
+
+    try {
+      const [result] = await Promise.all([
+        createEvent.mutateAsync({
+          babyNickname: babyNickname.trim(),
+          dueDate: dueDateValue,
+          babyGender,
+          recipientNames: names,
+        }),
+        wait(MIN_CREATING_VIEW_MS),
+      ]);
+      router.push(`/gender-reveal/manage/${result.code}?created`);
+    } catch {
+      setCreateError('풍선 생성에 실패했어요. 다시 시도해주세요');
+      setStage('recipients');
+    }
+  }
+
+  if (stage === 'creating') {
+    return <BalloonCreatingView babyNickname={babyNickname.trim()} />;
+  }
+
+  if (stage === 'recipients') {
+    return (
+      <RecipientListForm
+        initialNames={recipientNames}
+        errorMessage={createError}
+        isSubmitting={createEvent.isPending}
+        onBack={(names) => {
+          setRecipientNames(names);
+          setCreateError(null);
+          setStage('common');
+        }}
+        onSubmit={handleCreate}
+      />
     );
   }
 
@@ -134,24 +176,7 @@ export function StepOneForm() {
           </div>
         </div>
 
-        <div className="mt-[30px] flex flex-col gap-3">
-          <label className="font-pixel text-base text-ink" htmlFor={recipientId}>
-            받는 사람
-          </label>
-          <input
-            id={recipientId}
-            type="text"
-            className={`${inputClassName} ${fieldBorderClassName(fieldErrors.recipientName)}`}
-            value={recipientName}
-            onChange={(event) => {
-              setRecipientName(event.target.value);
-              setFieldErrors((prev) => ({ ...prev, recipientName: false }));
-            }}
-            placeholder="예시: 할머니, 할아버지"
-          />
-        </div>
-
-        <fieldset className="mt-6 border-0 p-0">
+        <fieldset className="mt-[30px] border-0 p-0">
           <legend className="mb-3 font-pixel text-base text-ink">아기 성별</legend>
           <div
             className={`flex gap-2.5 rounded ${fieldErrors.babyGender ? 'outline outline-2 outline-offset-2 outline-red-500' : ''}`}
@@ -199,20 +224,14 @@ export function StepOneForm() {
 
         <button
           type="submit"
-          disabled={createEvent.isPending}
-          className="mt-3 flex h-[60px] cursor-pointer items-center justify-center gap-2 rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="relative mt-[60px] flex h-[60px] cursor-pointer items-center justify-center rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90"
         >
-          {createEvent.isPending ? '링크 생성 중...' : '젠더리빌 풍선 만들기'}
-          <span aria-hidden="true">›</span>
+          받는 사람 입력
+          <span aria-hidden="true" className="absolute right-[15px] text-lg">
+            &gt;
+          </span>
         </button>
       </form>
-
-      {generatedShareLink && (
-        <LinkGeneratedModal
-          shareLink={generatedShareLink}
-          onClose={() => setGeneratedShareLink(null)}
-        />
-      )}
 
       {isUpdateNoticeOpen && (
         <UpdateNoticeModal onClose={() => setIsUpdateNoticeOpen(false)} />

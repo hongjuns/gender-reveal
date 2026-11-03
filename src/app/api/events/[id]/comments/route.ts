@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
   const supabase = getSupabaseServerClient();
   const { data: event, error: eventError } = await supabase
     .from('gender_reveal_events')
-    .select('*')
+    .select('id, link_expires_at')
     .eq('id', params.id)
     .maybeSingle();
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const supabase = getSupabaseServerClient();
   const { data: event, error: eventError } = await supabase
     .from('gender_reveal_events')
-    .select('*')
+    .select('id, link_expires_at')
     .eq('id', params.id)
     .maybeSingle();
 

@@ -1,4 +1,4 @@
-import { calculateLinkExpiresAt, formatKstDate, isLinkExpired, parseDateInputValue } from './date';
+import { calculateExtendedExpiresAt, calculateLinkExpiresAt, hasBeenExtended, formatKstDate, isLinkExpired, parseDateInputValue } from './date';
 
 describe('formatKstDate', () => {
   it("'yyyy년 MM월 dd일' 형식으로 변환한다", () => {
@@ -48,5 +48,45 @@ describe('isLinkExpired', () => {
     const expiresAt = new Date('2026-07-25T00:00:00.000Z');
     const now = new Date('2026-07-25T00:00:01.000Z');
     expect(isLinkExpired(expiresAt, now)).toBe(true);
+  });
+});
+
+describe('calculateExtendedExpiresAt', () => {
+  const now = new Date('2026-11-03T00:00:00.000Z');
+
+  it('만료 전이면 기존 만료 시각 + 7일', () => {
+    const expiresAt = new Date('2026-11-05T12:00:00.000Z');
+    expect(calculateExtendedExpiresAt(expiresAt, now).toISOString()).toBe('2026-11-12T12:00:00.000Z');
+  });
+
+  it('이미 만료되었으면 연장한 시점 + 7일', () => {
+    const expiresAt = new Date('2026-10-01T00:00:00.000Z');
+    expect(calculateExtendedExpiresAt(expiresAt, now).toISOString()).toBe('2026-11-10T00:00:00.000Z');
+  });
+
+  it('만료 시각과 연장 시점이 같으면 그 시각 + 7일', () => {
+    expect(calculateExtendedExpiresAt(now, now).toISOString()).toBe('2026-11-10T00:00:00.000Z');
+  });
+});
+
+describe('hasBeenExtended', () => {
+  const createdAt = new Date('2026-11-03T00:00:00.000Z');
+
+  it('만료 시각이 생성 + 7일 그대로면 연장하지 않은 것', () => {
+    expect(hasBeenExtended(new Date('2026-11-10T00:00:00.000Z'), createdAt)).toBe(false);
+  });
+
+  it('일괄 생성 시 created_at이 몇 ms 늦어도 연장하지 않은 것으로 본다', () => {
+    const laterCreatedAt = new Date(createdAt.getTime() + 9);
+    expect(hasBeenExtended(new Date('2026-11-10T00:00:00.000Z'), laterCreatedAt)).toBe(false);
+  });
+
+  it('만료 전 연장(생성 + 14일)이면 연장한 것', () => {
+    expect(hasBeenExtended(new Date('2026-11-17T00:00:00.000Z'), createdAt)).toBe(true);
+  });
+
+  it('만료 후 연장(연장 시점 + 7일)이면 연장한 것', () => {
+    const extendedAt = new Date('2026-11-20T00:00:00.000Z');
+    expect(hasBeenExtended(calculateExtendedExpiresAt(new Date('2026-11-10T00:00:00.000Z'), extendedAt), createdAt)).toBe(true);
   });
 });

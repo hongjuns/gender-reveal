@@ -1,93 +1,151 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StepOneForm } from './StepOneForm';
+import { MIN_CREATING_VIEW_MS, StepOneForm } from './StepOneForm';
 
-const mutateMock = jest.fn();
+const mutateAsyncMock = jest.fn();
+const pushMock = jest.fn();
 
 jest.mock('@/hooks/useCreateGenderRevealEvent', () => ({
-  useCreateGenderRevealEvent: () => ({ mutate: mutateMock, isPending: false }),
+  useCreateGenderRevealEvent: () => ({ mutateAsync: mutateAsyncMock, isPending: false }),
 }));
 
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: pushMock }),
+}));
+
+const createdResponse = {
+  code: 'code-1',
+  manageLink: 'http://localhost:3000/gender-reveal/manage/code-1',
+  linkExpiresAt: '2026-11-10T00:00:00.000Z',
+  events: [],
+};
+
 beforeEach(() => {
-  mutateMock.mockReset();
+  mutateAsyncMock.mockReset();
+  pushMock.mockReset();
 });
 
-async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+function setupUser() {
+  return userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+}
+
+async function closeUpdateNotice(user: ReturnType<typeof setupUser>) {
+  await user.click(screen.getByRole('button', { name: '닫기' }));
+}
+
+async function fillCommonFields(user: ReturnType<typeof setupUser>) {
   await user.type(screen.getByLabelText('아기 태명'), '콩이');
-  fireEvent.change(screen.getByLabelText('출산 예정일'), {
-    target: { value: '2026-12-25' },
-  });
-  await user.type(screen.getByLabelText('받는 사람'), '지민');
+  fireEvent.change(screen.getByLabelText('출산 예정일'), { target: { value: '2026-12-25' } });
   await user.click(screen.getByLabelText('아들'));
+}
+
+async function goToRecipients(user: ReturnType<typeof setupUser>) {
+  await closeUpdateNotice(user);
+  await fillCommonFields(user);
+  await user.click(screen.getByRole('button', { name: '받는 사람 입력' }));
 }
 
 describe('StepOneForm', () => {
   it('진입 시 업데이트 안내 팝업을 보여주고, 닫기 클릭 시 사라진다', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<StepOneForm />);
 
     expect(screen.getByRole('dialog', { name: '업데이트 안내' })).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: '닫기' }));
-
+    await closeUpdateNotice(user);
     expect(screen.queryByRole('dialog', { name: '업데이트 안내' })).not.toBeInTheDocument();
   });
 
-  it('필수값이 비어 있는 채로 제출하면 안내 메시지를 노출하고 API를 호출하지 않는다', async () => {
-    const user = userEvent.setup();
+  it('받는 사람 칸·패스키 입력이 없고, 버튼 문구는 "받는 사람 입력"이다', () => {
     render(<StepOneForm />);
 
-    await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
+    expect(screen.queryByLabelText('받는 사람')).not.toBeInTheDocument();
+    expect(screen.queryByText('패스키')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '받는 사람 입력' })).toBeInTheDocument();
+  });
+
+  it('필수값이 비어 있으면 안내 메시지를 보여주고 받는 사람 화면으로 넘어가지 않는다', async () => {
+    const user = setupUser();
+    render(<StepOneForm />);
+    await closeUpdateNotice(user);
+
+    await user.click(screen.getByRole('button', { name: '받는 사람 입력' }));
 
     expect(await screen.findByText('정보를 모두 입력해주세요')).toBeInTheDocument();
-    expect(mutateMock).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('받는 사람 01')).not.toBeInTheDocument();
   });
 
-  it('4개 필드를 모두 입력하고 제출하면 링크 생성 뮤테이션을 호출하고, 성공 시 링크 생성 팝업을 보여준다', async () => {
-    mutateMock.mockImplementation((input, { onSuccess }) => {
-      onSuccess({
-        id: 'abc-123',
-        shareLink: 'http://localhost:3000/gender-reveal/abc-123',
-        linkExpiresAt: '2026-08-01T00:00:00.000Z',
-      });
-    });
-
-    const user = userEvent.setup();
+  it('필수값을 입력하면 받는 사람 화면으로 넘어가고, 뒤로 가기 시 입력값이 유지된다', async () => {
+    const user = setupUser();
     render(<StepOneForm />);
+    await goToRecipients(user);
 
-    await fillValidForm(user);
-    await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
+    await user.type(screen.getByLabelText('받는 사람 01'), '할머니');
+    await user.click(screen.getByRole('button', { name: '뒤로 가기' }));
 
-    expect(mutateMock).toHaveBeenCalledWith(
-      {
-        babyNickname: '콩이',
-        dueDate: '2026-12-25',
-        recipientName: '지민',
-        babyGender: 'son',
-      },
-      expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
-    );
-    expect(await screen.findByRole('dialog', { name: '풍선이 완성되었어요' })).toBeInTheDocument();
-    expect(screen.getByText('🎈 풍선이 완성되었어요!')).toBeInTheDocument();
+    expect(screen.getByLabelText('아기 태명')).toHaveValue('콩이');
+    expect(screen.getByLabelText('아들')).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: '받는 사람 입력' }));
+    expect(screen.getByLabelText('받는 사람 01')).toHaveValue('할머니');
   });
 
-  it('링크 생성에 실패하면 에러 메시지를 노출하고 팝업은 뜨지 않는다', async () => {
-    mutateMock.mockImplementation((input, { onError }) => {
-      onError(new Error('network error'));
-    });
-
-    const user = userEvent.setup();
+  it('생성하면 로딩 화면을 최소 2초 보여준 뒤 관리 화면으로 이동한다', async () => {
+    jest.useFakeTimers();
+    mutateAsyncMock.mockResolvedValue(createdResponse);
+    const user = setupUser();
     render(<StepOneForm />);
+    await goToRecipients(user);
 
-    await fillValidForm(user);
+    await user.type(screen.getByLabelText('받는 사람 01'), '할머니');
+    await user.click(screen.getByRole('button', { name: '받는 사람 추가' }));
+    await user.type(screen.getByLabelText('받는 사람 02'), '삼촌');
     await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
 
-    expect(await screen.findByText('링크 생성에 실패했어요. 다시 시도해주세요')).toBeInTheDocument();
-    expect(screen.queryByRole('dialog', { name: '풍선이 완성되었어요' })).not.toBeInTheDocument();
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
+      babyNickname: '콩이',
+      dueDate: '2026-12-25',
+      babyGender: 'son',
+      recipientNames: ['할머니', '삼촌'],
+    });
+    expect(screen.getByText('콩이의')).toBeInTheDocument();
+    expect(screen.getByText('풍선이 만들어지고 있어요.')).toBeInTheDocument();
+
+    await act(async () => {
+      jest.advanceTimersByTime(MIN_CREATING_VIEW_MS - 1);
+    });
+    expect(pushMock).not.toHaveBeenCalled();
+
+    await act(async () => {
+      jest.advanceTimersByTime(1);
+    });
+    expect(pushMock).toHaveBeenCalledWith('/gender-reveal/manage/code-1?created');
+  });
+
+  it('생성에 실패하면 받는 사람 화면으로 돌아가 입력값을 유지하고 오류를 보여준다', async () => {
+    jest.useFakeTimers();
+    mutateAsyncMock.mockRejectedValue(new Error('fail'));
+    const user = setupUser();
+    render(<StepOneForm />);
+    await goToRecipients(user);
+
+    await user.type(screen.getByLabelText('받는 사람 01'), '할머니');
+    await user.click(screen.getByRole('button', { name: '젠더리빌 풍선 만들기' }));
+
+    await act(async () => {
+      jest.advanceTimersByTime(MIN_CREATING_VIEW_MS);
+    });
+
+    expect(await screen.findByText('풍선 생성에 실패했어요. 다시 시도해주세요')).toBeInTheDocument();
+    expect(screen.getByLabelText('받는 사람 01')).toHaveValue('할머니');
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("성별에서 '아들'과 '딸'은 동시에 선택될 수 없다", async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<StepOneForm />);
 
     const sonRadio = screen.getByLabelText('아들') as HTMLInputElement;

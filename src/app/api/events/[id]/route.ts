@@ -6,7 +6,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
     .from('gender_reveal_events')
-    .select('*')
+    // 관리 코드(code)가 서버 메모리에도 올라오지 않도록 받는 사람에게 필요한 칼럼만 조회한다.
+    .select('id, baby_nickname, due_date, recipient_name, gender, link_expires_at, created_at')
     .eq('id', params.id)
     .maybeSingle();
 

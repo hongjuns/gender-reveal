@@ -1,4 +1,4 @@
-import { addDays, isAfter, format } from 'date-fns';
+import { addDays, isAfter, format, max } from 'date-fns';
 
 const LINK_VALIDITY_DAYS = 7;
 
@@ -46,4 +46,20 @@ export function calculateLinkExpiresAt(createdAt: Date): Date {
 
 export function isLinkExpired(linkExpiresAt: Date, now: Date = new Date()): boolean {
   return isAfter(now, linkExpiresAt);
+}
+
+/**
+ * 풍선 1회 연장 시 새 만료 시각. 만료 전이면 기존 만료 시각 + 7일,
+ * 이미 만료되었으면 연장한 시점 + 7일 (spec Clarifications, research.md #5).
+ */
+/**
+ * 이미 1회 연장한 풍선인지. 생성 시 만료 시각은 항상 생성 + 7일이고, 연장하면 그보다 늦어지므로
+ * 별도 칼럼 없이 만료 시각이 생성 + 7일을 넘는지로 판단한다.
+ */
+export function hasBeenExtended(linkExpiresAt: Date, createdAt: Date): boolean {
+  return isAfter(linkExpiresAt, calculateLinkExpiresAt(createdAt));
+}
+
+export function calculateExtendedExpiresAt(linkExpiresAt: Date, now: Date = new Date()): Date {
+  return addDays(max([linkExpiresAt, now]), LINK_VALIDITY_DAYS);
 }

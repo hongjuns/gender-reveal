@@ -1,4 +1,4 @@
-import { getGenderRevealEvent } from './events';
+import { createGenderRevealEvent, getGenderRevealEvent } from './events';
 import { apiClient } from './client';
 
 jest.mock('./client', () => ({
@@ -6,9 +6,32 @@ jest.mock('./client', () => ({
 }));
 
 const getMock = apiClient.get as jest.Mock;
+const postMock = apiClient.post as jest.Mock;
 
 beforeEach(() => {
   getMock.mockReset();
+  postMock.mockReset();
+});
+
+describe('createGenderRevealEvent', () => {
+  it('받는 사람 목록을 담아 /events로 POST하고 응답 본문을 반환한다', async () => {
+    const response = {
+      code: 'code-1',
+      manageLink: 'http://localhost/gender-reveal/manage/code-1',
+      linkExpiresAt: '2026-11-10T00:00:00.000Z',
+      events: [{ id: 'a', recipientName: '할머니', shareLink: 'http://localhost/gender-reveal/a' }],
+    };
+    postMock.mockResolvedValue({ data: response });
+    const input = {
+      babyNickname: '콩이',
+      dueDate: '2026-12-25',
+      babyGender: 'son' as const,
+      recipientNames: ['할머니'],
+    };
+
+    await expect(createGenderRevealEvent(input)).resolves.toEqual(response);
+    expect(postMock).toHaveBeenCalledWith('/events', input);
+  });
 });
 
 describe('getGenderRevealEvent', () => {
