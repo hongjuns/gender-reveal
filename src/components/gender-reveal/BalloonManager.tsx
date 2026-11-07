@@ -15,16 +15,6 @@ interface BalloonManagerProps {
   onCreateNew: () => void;
 }
 
-// Figma 258-106 일러스트 배치(화면 중앙 기준 x 오프셋, 일러스트 영역 기준 top).
-const HEARTS = [
-  { color: 'pink', width: 36, height: 33, className: 'left-[calc(50%-129px)] top-[20px]' },
-  { color: 'pink', width: 24, height: 22, className: 'left-[calc(50%+67px)] top-[217px]' },
-  { color: 'pink', width: 36, height: 33, className: 'left-[calc(50%+121px)] top-[146px]' },
-  { color: 'pink', width: 36, height: 33, className: 'left-[calc(50%-135px)] top-[163px]' },
-  { color: 'blue', width: 37, height: 33, className: 'left-[calc(50%+102px)] top-[59px]' },
-  { color: 'blue', width: 37, height: 33, className: 'left-[calc(50%-164px)] top-[85px]' },
-] as const;
-
 export function BalloonManager({
   balloons,
   busyId = null,
@@ -55,32 +45,20 @@ export function BalloonManager({
   }
 
   return (
-    <section className="flex w-[min(420px,100%)] flex-col bg-white px-5 pb-10 pt-[61px]">
+    <section className="flex w-[min(420px,100%)] flex-col bg-white px-5 pb-10 pt-[85px]">
       <div className="text-center font-pixel text-ink">
         <h1 className="m-0 text-xl font-normal">풍선이 생성되었어요!</h1>
-        <p className="m-0 mt-3 text-sm">링크를 복사하여 풍선 이벤트를 선물하세요.</p>
+        <p className="m-0 mt-1 text-sm">링크를 복사하여 풍선 이벤트를 선물하세요.</p>
       </div>
 
-      <div className="relative mt-[59px] h-[239px] w-full" aria-hidden="true">
-        {HEARTS.map((heart, index) => (
-          <Image
-            key={index}
-            src={`/img/step2/heart-${heart.color}.png`}
-            alt=""
-            width={heart.width}
-            height={heart.height}
-            className={`absolute ${heart.className}`}
-          />
-        ))}
-        <Image
-          src="/img/step2/balloon.png"
-          alt=""
-          width={160}
-          height={217}
-          priority
-          className="absolute left-[calc(50%-1px)] top-0 -translate-x-1/2"
-        />
-      </div>
+      <Image
+        src="/img/manage/gift-balloon.png"
+        alt=""
+        width={240}
+        height={277}
+        priority
+        className="mx-auto mt-[25px]"
+      />
 
       {notice && (
         <p className="m-0 mt-6 text-center text-sm text-red-600" role="alert">
@@ -89,7 +67,7 @@ export function BalloonManager({
       )}
 
       {balloons.length > 0 ? (
-        <ul className="m-0 mt-11 flex list-none flex-col gap-[30px] p-0">
+        <ul className="m-0 mt-[34px] flex list-none flex-col gap-[30px] p-0">
           {balloons.map((balloon, index) => (
             <ManagedBalloonRow
               key={balloon.id}

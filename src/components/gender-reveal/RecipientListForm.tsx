@@ -74,96 +74,97 @@ export function RecipientListForm({
   const showEmptyError = emptyKeys.size > 0;
 
   return (
-    <form
-      className="flex w-[min(420px,100%)] flex-col bg-white p-5"
-      onSubmit={handleSubmit}
-      noValidate
-    >
-      <button
-        type="button"
-        onClick={() => onBack(names)}
-        aria-label="뒤로 가기"
-        className="flex size-10 cursor-pointer items-center justify-center rounded-3xl border border-solid border-[#f8f8f8] bg-[rgba(245,245,245,0.2)] p-0"
+    // 화면 전체를 덮는 스크롤 영역: 뒤로가기는 위에, 생성 버튼은 아래에 고정된다.
+    <div className="fixed inset-0 z-10 overflow-y-auto bg-white">
+      <form
+        className="mx-auto flex min-h-full w-[min(420px,100%)] flex-col bg-white"
+        onSubmit={handleSubmit}
+        noValidate
       >
-        <Image src="/img/recipients/back-arrow.svg" alt="" width={17} height={14} />
-      </button>
+        <div className="sticky top-0 z-10 bg-white px-5 pb-[21px] pt-[26px]">
+          <button
+            type="button"
+            onClick={() => onBack(names)}
+            aria-label="뒤로 가기"
+            className="flex size-10 cursor-pointer items-center justify-center rounded-3xl border border-solid border-[#f8f8f8] bg-[rgba(245,245,245,0.2)] p-0"
+          >
+            <Image src="/img/recipients/back-arrow.svg" alt="" width={17} height={14} />
+          </button>
+        </div>
 
-      <ul className="m-0 mt-[21px] flex list-none flex-col gap-[30px] p-0">
-        {fields.map((field, index) => {
-          const inputId = `${idPrefix}-recipient-${field.key}`;
-          const number = formatRecipientNumber(index);
-          const isEmpty = emptyKeys.has(field.key);
-          return (
-            <li key={field.key} className="flex flex-col gap-3">
-              <label className="font-pixel text-base text-ink" htmlFor={inputId}>
-                받는 사람 {number}
-              </label>
-              <div className="relative">
-                <input
-                  id={inputId}
-                  type="text"
-                  className={`${inputClassName} ${isEmpty ? 'border-red-500' : 'border-transparent'}`}
-                  value={field.value}
-                  onChange={(event) => updateField(field.key, event.target.value)}
-                  placeholder="예시: 할머니, 할아버지"
-                  aria-invalid={isEmpty || undefined}
-                />
-                {index > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeField(field.key)}
-                    aria-label={`받는 사람 ${number} 삭제`}
-                    className="absolute right-[15px] top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
-                  >
-                    <span className="inline-flex rotate-45">
-                      <Image src="/img/recipients/remove-icon.svg" alt="" width={14} height={14} />
-                    </span>
-                  </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+        <div className="flex flex-1 flex-col px-5 pb-[76px]">
+          <ul className="m-0 flex list-none flex-col gap-[30px] p-0">
+            {fields.map((field, index) => {
+              const inputId = `${idPrefix}-recipient-${field.key}`;
+              const number = formatRecipientNumber(index);
+              const isEmpty = emptyKeys.has(field.key);
+              return (
+                <li key={field.key} className="flex flex-col gap-3">
+                  <label className="font-pixel text-base text-ink" htmlFor={inputId}>
+                    받는 사람 {number}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id={inputId}
+                      type="text"
+                      className={`${inputClassName} ${isEmpty ? 'border-red-500' : 'border-transparent'}`}
+                      value={field.value}
+                      onChange={(event) => updateField(field.key, event.target.value)}
+                      placeholder="예시: 할머니, 할아버지"
+                      aria-invalid={isEmpty || undefined}
+                    />
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeField(field.key)}
+                        aria-label={`받는 사람 ${number} 삭제`}
+                        className="absolute right-[15px] top-1/2 flex size-5 -translate-y-1/2 cursor-pointer items-center justify-center border-0 bg-transparent p-0"
+                      >
+                        <Image src="/img/recipients/remove-x.svg" alt="" width={10.7071} height={10.909} />
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
 
-      <button
-        type="button"
-        onClick={addField}
-        disabled={!canAdd}
-        aria-label="받는 사람 추가"
-        className="relative mx-auto mt-[76px] flex size-16 cursor-pointer items-center justify-center border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <Image
-          src="/img/recipients/add-circle.svg"
-          alt=""
-          width={64}
-          height={64}
-          className="absolute inset-0"
-        />
-        <Image src="/img/recipients/add-plus.svg" alt="" width={20} height={20} className="relative" />
-      </button>
-      {!canAdd && (
-        <p className="m-0 mt-2 text-center text-sm text-ink-muted">
-          받는 사람은 최대 {MAX_RECIPIENTS}명까지 추가할 수 있어요
-        </p>
-      )}
+          <button
+            type="button"
+            onClick={addField}
+            disabled={!canAdd}
+            aria-label="받는 사람 추가"
+            className="relative mx-auto mt-[76px] flex size-16 cursor-pointer items-center justify-center border-0 bg-transparent p-0 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Image src="/img/recipients/add-circle.svg" alt="" width={64} height={64} className="absolute inset-0" />
+            <Image src="/img/recipients/add-plus.svg" alt="" width={20} height={20} className="relative" />
+          </button>
+          {!canAdd && (
+            <p className="m-0 mt-2 text-center text-sm text-ink-muted">
+              받는 사람은 최대 {MAX_RECIPIENTS}명까지 추가할 수 있어요
+            </p>
+          )}
 
-      {(showEmptyError || errorMessage) && (
-        <p className="m-0 mt-6 text-sm text-red-600" role="alert">
-          {showEmptyError ? '받는 사람을 모두 입력해주세요' : errorMessage}
-        </p>
-      )}
+          {(showEmptyError || errorMessage) && (
+            <p className="m-0 mt-6 text-sm text-red-600" role="alert">
+              {showEmptyError ? '받는 사람을 모두 입력해주세요' : errorMessage}
+            </p>
+          )}
+        </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="relative mt-[76px] flex h-[60px] cursor-pointer items-center justify-center rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        젠더리빌 풍선 만들기
-        <span aria-hidden="true" className="absolute right-[15px] text-lg">
-          &gt;
-        </span>
-      </button>
-    </form>
+        <div className="sticky bottom-0 z-10 bg-white px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-2">
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="relative flex h-[60px] w-full cursor-pointer items-center justify-center rounded border-0 bg-ink font-pixel text-base text-white transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            젠더리빌 풍선 만들기
+            <span aria-hidden="true" className="absolute right-[15px] text-lg">
+              &gt;
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }
