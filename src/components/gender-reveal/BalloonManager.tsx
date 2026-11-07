@@ -11,7 +11,6 @@ interface BalloonManagerProps {
   busyId?: string | null;
   notice?: string | null;
   onDelete: (id: string) => Promise<unknown> | void;
-  onExtend?: (id: string) => void;
   onCreateNew: () => void;
 }
 
@@ -20,7 +19,6 @@ export function BalloonManager({
   busyId = null,
   notice = null,
   onDelete,
-  onExtend,
   onCreateNew,
 }: BalloonManagerProps) {
   const [deleteTarget, setDeleteTarget] = useState<ManagedBalloon | null>(null);
@@ -76,7 +74,6 @@ export function BalloonManager({
               isBusy={busyId === balloon.id}
               onCopied={() => setShowCopiedToast(true)}
               onDelete={setDeleteTarget}
-              onExtend={onExtend ? (target) => onExtend(target.id) : undefined}
             />
           ))}
         </ul>

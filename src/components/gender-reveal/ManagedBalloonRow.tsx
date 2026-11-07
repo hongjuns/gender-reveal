@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { formatKstDate } from '@/lib/date';
 import { formatRecipientNumber } from '@/lib/recipients';
 import type { ManagedBalloon } from '@/types/genderReveal';
 
@@ -12,17 +11,9 @@ interface ManagedBalloonRowProps {
   isBusy?: boolean;
   onCopied?: () => void;
   onDelete: (balloon: ManagedBalloon) => void;
-  onExtend?: (balloon: ManagedBalloon) => void;
 }
 
-export function ManagedBalloonRow({
-  index,
-  balloon,
-  isBusy = false,
-  onCopied,
-  onDelete,
-  onExtend,
-}: ManagedBalloonRowProps) {
+export function ManagedBalloonRow({ index, balloon, isBusy = false, onCopied, onDelete }: ManagedBalloonRowProps) {
   const [copyFailed, setCopyFailed] = useState(false);
   const number = formatRecipientNumber(index);
 
@@ -37,7 +28,7 @@ export function ManagedBalloonRow({
   }
 
   return (
-    <li className="flex flex-col gap-3">
+    <li className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
         <span className="font-pixel text-base text-ink">받는 사람 {number}</span>
         <button
@@ -65,33 +56,11 @@ export function ManagedBalloonRow({
       </div>
 
       {copyFailed && (
-        <div role="alert" className="flex flex-col gap-1 text-sm">
+        <div role="alert" className="mt-2 flex flex-col gap-1 text-sm">
           <p className="m-0 text-red-600">복사에 실패했어요. 링크를 직접 선택해 복사해주세요</p>
           <p className="m-0 select-all break-all text-ink-muted">{balloon.shareLink}</p>
         </div>
       )}
-
-      <div className="flex items-center justify-between pl-[2px] pr-[23px] text-[10px] font-medium">
-        {balloon.isExpired ? (
-          <span className="text-red-500">만료됨</span>
-        ) : (
-          <span className="text-ink-muted">{formatKstDate(new Date(balloon.linkExpiresAt))}까지</span>
-        )}
-        {onExtend &&
-          (balloon.canExtend ? (
-            <button
-              type="button"
-              onClick={() => onExtend(balloon)}
-              disabled={isBusy}
-              aria-label={`받는 사람 ${number} ${balloon.recipientName} 7일 연장`}
-              className="cursor-pointer border-0 bg-transparent p-0 text-[10px] font-medium text-ink underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              7일 연장
-            </button>
-          ) : (
-            <span className="text-ink-muted">연장 완료</span>
-          ))}
-      </div>
     </li>
   );
 }

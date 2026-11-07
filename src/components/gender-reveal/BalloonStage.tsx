@@ -81,10 +81,10 @@ export function BalloonStage() {
   const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : 'animate-float';
 
   return (
-    <section className="flex w-[min(420px,100%)] flex-col items-center bg-white p-5 text-center">
-      <p className="m-0 whitespace-pre-line font-pixel text-[22px] leading-[29px] text-ink">{`${babyNickname}는\n아들일까요? 딸일까요?`}</p>
+    <section className="flex w-[min(420px,100%)] flex-col items-center bg-white px-5 pb-5 pt-[14px] text-center">
+      <p className="m-0 whitespace-pre-line font-pixel text-[26px] leading-[34px] text-ink">{`${babyNickname}는\n아들일까요? 딸일까요?`}</p>
 
-      <div className="relative mt-14">
+      <div className="relative left-[-1px] mt-[92px] h-[217px] w-[160px]">
         <HeartParticles />
         <button
           type="button"
@@ -97,10 +97,9 @@ export function BalloonStage() {
           <Image
             src="/img/step2/balloon.png"
             alt="검정 풍선"
-            width={575}
-            height={779}
+            width={160}
+            height={217}
             priority
-            className="h-auto w-[min(200px,41vw)]"
           />
         </button>
 
@@ -123,10 +122,8 @@ export function BalloonStage() {
         )}
       </div>
 
-      <p className="m-0 mt-16 font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
-      <p className="m-0 mt-2 font-pixel text-lg text-ink-muted">{touchCount} / 10</p>
-  
-      
+      <p className="m-0 mt-[115px] font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
+      <p className="m-0 mt-[6px] font-pixel text-lg text-[#a3a3a3]">{touchCount} / 10</p>
     </section>
   );
 }

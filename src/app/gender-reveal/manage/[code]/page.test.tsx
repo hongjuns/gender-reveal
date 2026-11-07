@@ -8,7 +8,6 @@ const pushMock = jest.fn();
 const replaceMock = jest.fn();
 const notFoundMock = jest.fn();
 const deleteMutateAsyncMock = jest.fn();
-const extendMutateMock = jest.fn();
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
@@ -18,9 +17,6 @@ jest.mock('next/navigation', () => ({
 jest.mock('@/hooks/useManagedBalloons');
 jest.mock('@/hooks/useDeleteBalloon', () => ({
   useDeleteBalloon: () => ({ mutateAsync: deleteMutateAsyncMock, isPending: false }),
-}));
-jest.mock('@/hooks/useExtendBalloon', () => ({
-  useExtendBalloon: () => ({ mutate: extendMutateMock, isPending: false }),
 }));
 
 const mockedUseManagedBalloons = useManagedBalloons as jest.Mock;
@@ -34,7 +30,6 @@ beforeEach(() => {
   replaceMock.mockReset();
   notFoundMock.mockReset();
   deleteMutateAsyncMock.mockReset();
-  extendMutateMock.mockReset();
   mockedUseManagedBalloons.mockReset();
   mockedUseManagedBalloons.mockReturnValue({
     data: buildGroup([buildBalloon({ id: 'a', recipientName: '할머니' })]),
@@ -89,12 +84,9 @@ describe('관리 페이지 /gender-reveal/manage/[code]', () => {
     expect(await screen.findByText('이미 삭제된 풍선이에요')).toBeInTheDocument();
   });
 
-  it('연장 버튼을 누르면 연장 뮤테이션을 호출한다', async () => {
-    const user = userEvent.setup();
+  it('연장 버튼은 보여주지 않는다', () => {
     renderPage();
 
-    await user.click(screen.getByRole('button', { name: '받는 사람 01 할머니 7일 연장' }));
-
-    expect(extendMutateMock).toHaveBeenCalledWith('a', expect.any(Object));
+    expect(screen.queryByRole('button', { name: /연장/ })).not.toBeInTheDocument();
   });
 });

@@ -74,7 +74,7 @@ export function RecipientListForm({
   const showEmptyError = emptyKeys.size > 0;
 
   return (
-    // 화면 전체를 덮는 스크롤 영역: 뒤로가기는 위에, 생성 버튼은 아래에 고정된다.
+    // 화면 전체를 덮는 스크롤 영역: 뒤로가기만 위에 고정되고 생성 버튼은 내용과 함께 스크롤된다.
     <div className="fixed inset-0 z-10 overflow-y-auto bg-white">
       <form
         className="mx-auto flex min-h-full w-[min(420px,100%)] flex-col bg-white"
@@ -92,7 +92,7 @@ export function RecipientListForm({
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col px-5 pb-[76px]">
+        <div className="flex flex-col px-5 pb-[76px]">
           <ul className="m-0 flex list-none flex-col gap-[30px] p-0">
             {fields.map((field, index) => {
               const inputId = `${idPrefix}-recipient-${field.key}`;
@@ -152,7 +152,7 @@ export function RecipientListForm({
           )}
         </div>
 
-        <div className="sticky bottom-0 z-10 bg-white px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-2">
+        <div className="px-5 pb-[max(20px,env(safe-area-inset-bottom))]">
           <button
             type="submit"
             disabled={isSubmitting}

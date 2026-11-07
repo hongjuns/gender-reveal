@@ -7,6 +7,7 @@ import { useGenderRevealStore } from '@/stores/genderRevealStore';
 import { BalloonStage } from '@/components/gender-reveal/BalloonStage';
 import { ResultReveal } from '@/components/gender-reveal/ResultReveal';
 import { ShareLinkBanner } from '@/components/gender-reveal/ShareLinkBanner';
+import { ProductPromoBanner } from '@/components/gender-reveal/ProductPromoBanner';
 import { ExpiredLinkNotice } from '@/components/gender-reveal/ExpiredLinkNotice';
 import { StepSkeleton } from '@/components/gender-reveal/StepSkeleton';
 
@@ -66,6 +67,21 @@ export default function SharedGenderRevealPage({ params, searchParams }: SharedG
     );
   }
 
+  // 풍선 단계는 Figma 258-214처럼 상단 배너부터 위에서 아래로 쌓는다.
+  if (step === 'interaction') {
+    return (
+      <main className="flex min-h-[100dvh] flex-col items-center bg-white">
+        {event && (
+          <div className="flex w-[min(420px,100%)] flex-col gap-4 px-5 pt-5">
+            <ProductPromoBanner babyNickname={event.babyNickname} />
+            {isCreated && <ShareLinkBanner shareLink={event.shareLink} />}
+          </div>
+        )}
+        <BalloonStage />
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 bg-white p-6">
       {isCreated && event && (
@@ -73,7 +89,6 @@ export default function SharedGenderRevealPage({ params, searchParams }: SharedG
           <ShareLinkBanner shareLink={event.shareLink} />
         </div>
       )}
-      {step === 'interaction' && <BalloonStage />}
       {step === 'result' && (
         <ResultReveal eventId={id} onCreateNew={() => router.push('/gender-reveal')} />
       )}

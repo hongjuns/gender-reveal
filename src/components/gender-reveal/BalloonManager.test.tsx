@@ -10,18 +10,9 @@ const balloons = [
 
 function renderManager(props: Partial<React.ComponentProps<typeof BalloonManager>> = {}) {
   const onDelete = jest.fn().mockResolvedValue(undefined);
-  const onExtend = jest.fn();
   const onCreateNew = jest.fn();
-  render(
-    <BalloonManager
-      balloons={balloons}
-      onDelete={onDelete}
-      onExtend={onExtend}
-      onCreateNew={onCreateNew}
-      {...props}
-    />,
-  );
-  return { onDelete, onExtend, onCreateNew };
+  render(<BalloonManager balloons={balloons} onDelete={onDelete} onCreateNew={onCreateNew} {...props} />);
+  return { onDelete, onCreateNew };
 }
 
 describe('BalloonManager', () => {
@@ -80,18 +71,9 @@ describe('BalloonManager', () => {
     expect(onCreateNew).toHaveBeenCalled();
   });
 
-  it('연장 버튼을 누르면 onExtend에 id를 넘긴다', async () => {
-    const user = userEvent.setup();
-    const { onExtend } = renderManager();
-
-    await user.click(screen.getByRole('button', { name: '받는 사람 01 할아버지, 할머니 7일 연장' }));
-
-    expect(onExtend).toHaveBeenCalledWith('a');
-  });
-
   it('notice가 있으면 안내 문구를 보여준다', () => {
-    renderManager({ notice: '이미 연장한 풍선이에요' });
+    renderManager({ notice: '이미 삭제된 풍선이에요' });
 
-    expect(screen.getByRole('alert')).toHaveTextContent('이미 연장한 풍선이에요');
+    expect(screen.getByRole('alert')).toHaveTextContent('이미 삭제된 풍선이에요');
   });
 });

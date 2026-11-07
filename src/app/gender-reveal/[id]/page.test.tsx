@@ -50,6 +50,7 @@ describe('SharedGenderRevealPage', () => {
     render(<SharedGenderRevealPage params={{ id: 'abc-123' }} searchParams={{}} />);
 
     expect(screen.getByText(/콩이는/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /콩이만의 특별한 보조배터리 만들기/ })).toBeInTheDocument();
     expect(screen.queryByLabelText('아기 태명')).not.toBeInTheDocument();
     expect(useGenderRevealStore.getState().step).toBe('interaction');
   });

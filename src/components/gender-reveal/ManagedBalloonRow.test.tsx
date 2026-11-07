@@ -5,22 +5,14 @@ import { buildBalloon } from '@/hooks/managedBalloonTestUtils';
 
 function renderRow(props: Partial<React.ComponentProps<typeof ManagedBalloonRow>> = {}) {
   const onDelete = jest.fn();
-  const onExtend = jest.fn();
   const onCopied = jest.fn();
   const balloon = props.balloon ?? buildBalloon({ linkExpiresAt: '2026-11-10T03:00:00.000Z' });
   render(
     <ul>
-      <ManagedBalloonRow
-        index={1}
-        balloon={balloon}
-        onDelete={onDelete}
-        onExtend={onExtend}
-        onCopied={onCopied}
-        {...props}
-      />
+      <ManagedBalloonRow index={1} balloon={balloon} onDelete={onDelete} onCopied={onCopied} {...props} />
     </ul>,
   );
-  return { onDelete, onExtend, onCopied, balloon };
+  return { onDelete, onCopied, balloon };
 }
 
 describe('ManagedBalloonRow', () => {
@@ -63,33 +55,17 @@ describe('ManagedBalloonRow', () => {
     expect(onDelete).toHaveBeenCalledWith(balloon);
   });
 
-  it('유효한 풍선은 KST 만료일과 7일 연장 버튼을 보여준다', async () => {
-    const user = userEvent.setup();
-    const { onExtend, balloon } = renderRow();
+  it('만료일과 연장 버튼은 보여주지 않는다', () => {
+    renderRow({ balloon: buildBalloon({ linkExpiresAt: '2026-11-10T03:00:00.000Z', isExpired: true }) });
 
-    expect(screen.getByText(/2026년 11월 10일까지/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '받는 사람 02 할머니 7일 연장' }));
-    expect(onExtend).toHaveBeenCalledWith(balloon);
+    expect(screen.queryByText(/까지/)).not.toBeInTheDocument();
+    expect(screen.queryByText('만료됨')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /연장/ })).not.toBeInTheDocument();
   });
 
-  it('만료된 풍선은 "만료됨"을 보여주고, 연장하지 않았다면 연장할 수 있다', () => {
-    renderRow({ balloon: buildBalloon({ isExpired: true }) });
-
-    expect(screen.getByText('만료됨')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /7일 연장/ })).toBeEnabled();
-  });
-
-  it('이미 연장한 풍선은 "연장 완료"를 보여주고 연장 버튼이 없다', () => {
-    renderRow({ balloon: buildBalloon({ canExtend: false }) });
-
-    expect(screen.getByText('연장 완료')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /7일 연장/ })).not.toBeInTheDocument();
-  });
-
-  it('처리 중이면 삭제·연장 버튼이 비활성화된다', () => {
+  it('처리 중이면 삭제 버튼이 비활성화된다', () => {
     renderRow({ isBusy: true });
 
     expect(screen.getByRole('button', { name: /삭제/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /7일 연장/ })).toBeDisabled();
   });
 });

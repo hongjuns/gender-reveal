@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { notFound, useRouter } from 'next/navigation';
 import { useManagedBalloons } from '@/hooks/useManagedBalloons';
 import { useDeleteBalloon } from '@/hooks/useDeleteBalloon';
-import { useExtendBalloon } from '@/hooks/useExtendBalloon';
 import { BalloonManager } from '@/components/gender-reveal/BalloonManager';
 import { ManageLinkModal } from '@/components/gender-reveal/ManageLinkModal';
 import { StepSkeleton } from '@/components/gender-reveal/StepSkeleton';
@@ -25,7 +24,6 @@ export default function ManagePage({ params, searchParams }: ManagePageProps) {
 
   const { data, isPending, isError } = useManagedBalloons(code);
   const deleteMutation = useDeleteBalloon(code);
-  const extendMutation = useExtendBalloon(code);
 
   if (isPending) {
     return (
@@ -62,22 +60,7 @@ export default function ManagePage({ params, searchParams }: ManagePageProps) {
     }
   }
 
-  function handleExtend(id: string) {
-    setNotice(null);
-    extendMutation.mutate(id, {
-      onSuccess: (result) => {
-        if (result.status === 'already_extended') setNotice('이미 연장한 풍선이에요');
-        if (result.status === 'not_found') setNotice('이미 삭제된 풍선이에요');
-      },
-      onError: () => setNotice('연장에 실패했어요. 다시 시도해주세요'),
-    });
-  }
-
-  const busyId = deleteMutation.isPending
-    ? deleteMutation.variables ?? null
-    : extendMutation.isPending
-      ? extendMutation.variables ?? null
-      : null;
+  const busyId = deleteMutation.isPending ? (deleteMutation.variables ?? null) : null;
 
   return (
     <main className="flex min-h-[100dvh] justify-center bg-white">
@@ -86,7 +69,6 @@ export default function ManagePage({ params, searchParams }: ManagePageProps) {
         busyId={busyId}
         notice={notice}
         onDelete={handleDelete}
-        onExtend={handleExtend}
         onCreateNew={() => router.push('/gender-reveal')}
       />
       {isLinkModalOpen && (
