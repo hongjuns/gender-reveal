@@ -81,7 +81,7 @@ export function BalloonStage() {
   const motionClassName = isBursting ? 'animate-burst' : isShaking ? 'animate-shake' : 'animate-float';
 
   return (
-    <section className="flex w-[min(420px,100%)] flex-col items-center bg-white px-5 pb-5 pt-[14px] text-center">
+    <section className="flex w-[min(420px,100%)] flex-col items-center bg-white px-5 pb-5 pt-[34px] text-center">
       <p className="m-0 whitespace-pre-line font-pixel text-[26px] leading-[34px] text-ink">{`${babyNickname}는\n아들일까요? 딸일까요?`}</p>
 
       <div className="relative left-[-1px] mt-[92px] h-[217px] w-[160px]">
@@ -122,7 +122,7 @@ export function BalloonStage() {
         )}
       </div>
 
-      <p className="m-0 mt-[115px] font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
+      <p className="m-0 mt-[70px] font-pixel text-lg text-ink">풍선을 터치해서 터뜨려주세요!</p>
       <p className="m-0 mt-[6px] font-pixel text-lg text-[#a3a3a3]">{touchCount} / 10</p>
     </section>
   );

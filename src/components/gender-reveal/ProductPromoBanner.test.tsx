@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { PRODUCT_PROMO_URL, ProductPromoBanner } from './ProductPromoBanner';
 
 describe('ProductPromoBanner', () => {
@@ -11,9 +12,12 @@ describe('ProductPromoBanner', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('닫기 버튼이 없다', () => {
+  it('X 버튼을 누르면 배너가 닫힌다', async () => {
+    const user = userEvent.setup();
     render(<ProductPromoBanner babyNickname="콩이" />);
 
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '배너 닫기' }));
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });
